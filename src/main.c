@@ -5,6 +5,7 @@
  *      Author: mateusz
  */
 
+#include "svg.h"
 #include <SDL2/SDL.h>
 
 #include <stdio.h>
@@ -24,25 +25,44 @@ typedef struct line_coordinates_t {
  */
 line_coordinates_t main_get_bearing_line (SDL_Rect *for_this, short bearing)
 {
-	line_coordinates_t out;
+	line_coordinates_t out = {0u};
 
-	if (bearing == 0)
-	{
+	if (bearing == 0) {
 		// draw from the middle of upper border
 	}
-	if (bearing > 0 && bearing < 90)
-	{
+	else if (bearing > 0 && bearing < 90) {
 		// draw from the top right corner
 	}
+	else if (bearing == 90) {
+		// draw from the middle of right border
+	}
+	else if (bearing > 90 && bearing < 180) {
+		// draw from the bottom right corner
+	}
+	else if (bearing == 180) {
+		// draw from the middle of bottom border
+	}
+	else if (bearing > 180 && bearing < 270) {
+		// draw from left bottom corner
+	}
+	else if (bearing == 270) {
+		// draw from the middle of left border
+	}
+	else if (bearing > 270 && bearing < 360) {
+		// draw from the top left corner
+	}
+	else {
+		// ???
+	}
 
-	//out.x1 =
+	// out.x1 =
 
 	return out;
 }
 
 int main (int argc, char *argv[])
 {
-
+	svgDrawing *ptSvg;
 	const int initres = SDL_Init (SDL_INIT_VIDEO);
 
 	if (initres < 0) {
@@ -80,6 +100,11 @@ int main (int argc, char *argv[])
 	SDL_DestroyWindow (window);
 
 	SDL_Quit ();
+
+	ptSvg = svgOpenFile (argv[1]);
+	if (ptSvg == NULL) {
+		printf ("ERROR(%d): %s.\n", svgGetLastError (), svgGetLastErrorDescription ());
+	}
 
 	return 0;
 }

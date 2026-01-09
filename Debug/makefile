@@ -55,7 +55,7 @@ main-build: ParaATC
 ParaATC: $(OBJS) $(USER_OBJS) makefile $(OPTIONAL_TOOL_DEPS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -pthread -o "ParaATC" $(OBJS) $(USER_OBJS) $(LIBS) -lSDL2 -lSDL2_gfx -lSDL2_image -lSDL2_mixer -lSDL2_net -lSDL2_ttf
+	g++ -L"../lib/libsvg2/bin" -pthread -o "ParaATC" $(OBJS) $(USER_OBJS) $(LIBS) -lSDL2 -lSDL2_gfx -lSDL2_image -lSDL2_ttf -lsvg2 -lxml2
 	@echo 'Finished building target: $@'
 	@echo ' '
 
