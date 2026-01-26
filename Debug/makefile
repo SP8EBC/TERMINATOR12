@@ -38,7 +38,7 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := ParaATC
+BUILD_ARTIFACT_NAME := TERMINATOR12
 BUILD_ARTIFACT_EXTENSION :=
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
@@ -49,19 +49,19 @@ BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ART
 all: main-build
 
 # Main-build Target
-main-build: ParaATC
+main-build: TERMINATOR12
 
 # Tool invocations
-ParaATC: $(OBJS) $(USER_OBJS) makefile $(OPTIONAL_TOOL_DEPS)
+TERMINATOR12: $(OBJS) $(USER_OBJS) makefile $(OPTIONAL_TOOL_DEPS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L"../lib/libsvg2/bin" -pthread -o "ParaATC" $(OBJS) $(USER_OBJS) $(LIBS) -lSDL2 -lSDL2_gfx -lSDL2_image -lSDL2_ttf -lsvg2 -lxml2
+	g++ -L"../lib/libsvg2/bin" -pthread -o "TERMINATOR12" $(OBJS) $(USER_OBJS) $(LIBS) -lSDL2 -lSDL2_gfx -lSDL2_image -lSDL2_ttf -lsvg2 -lxml2
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) ParaATC
+	-$(RM) TERMINATOR12
 	-@echo ' '
 
 .PHONY: all clean dependents main-build
