@@ -7,12 +7,14 @@
 
 #include "svg.h"
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
 #include <stdio.h>
 #include <unistd.h>
 
 #include "types/aircraft_stv_t.h"
 #include "draw/aircraft.h"
+#include "draw/text.h"
 
 int main (int argc, char *argv[])
 {
@@ -27,6 +29,8 @@ int main (int argc, char *argv[])
 		return -1;
 	}
 
+	TTF_Init();
+
 	SDL_Window *window = SDL_CreateWindow ("TERMINATOR12",
 										   SDL_WINDOWPOS_UNDEFINED,
 										   SDL_WINDOWPOS_UNDEFINED,
@@ -37,6 +41,8 @@ int main (int argc, char *argv[])
 	SDL_Renderer *renderer = SDL_CreateRenderer (window, -1, SDL_RENDERER_ACCELERATED);
 
 	aircraft_stv_t stv = {0U};
+	stv.lat = 20;
+	stv.lon = 20;
 
 	while (1) {
 		SDL_Event e;
@@ -47,7 +53,9 @@ int main (int argc, char *argv[])
 		}
 		SDL_SetRenderDrawColor (renderer, 0, 0, 0, 0);
 		SDL_RenderClear (renderer);
-		aircraft_draw_with_bearing_line (renderer, &stv);
+		stv.bearing++;
+		aircraft_draw_w_bearing_line (renderer, &stv);
+		draw_text_test(renderer, 11);
 		//		SDL_SetRenderDrawColor (renderer, 255, 255, 255, 0);
 		//		SDL_RenderDrawRect (renderer, &rectangle);
 		//		const line_coordinates_t line = main_get_bearing_line(&rectangle, (++bearing) %
@@ -58,6 +66,7 @@ int main (int argc, char *argv[])
 	SDL_DestroyRenderer (renderer);
 	SDL_DestroyWindow (window);
 
+	TTF_Quit();
 	SDL_Quit ();
 
 	ptSvg = svgOpenFile (argv[1]);

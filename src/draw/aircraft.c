@@ -10,13 +10,15 @@
 #include "draw/aircraft.h"
 #include "types/line_coordinates_t.h"
 
+#include "coordinates.h"
+
+#include "draw_aircraft_config.h"
+
 #include <math.h>
 
 /// ==================================================================================================
 ///	LOCAL DEFINITIONS
 /// ==================================================================================================
-
-#define LINE_LN (25.0)
 
 #define BEARING_TO_SDLANGLE(b) ((b + 270) % 360)
 
@@ -101,8 +103,8 @@ static line_coordinates_t aircraft_get_bearing_line (SDL_Rect *for_this, short b
 
 	// calculate end point basing on angle
 
-	int help_x = round (cos ((double)sdlangle * (M_PI / 180.0)) * LINE_LN);
-	int help_y = round (sin ((double)sdlangle * (M_PI / 180.0)) * LINE_LN);
+	int help_x = (int)round (cos ((double)sdlangle * (M_PI / 180.0)) * CONFIG_DRAW_AIRCRAFT_BEARING_LINE_LN);
+	int help_y = (int)round (sin ((double)sdlangle * (M_PI / 180.0)) * CONFIG_DRAW_AIRCRAFT_BEARING_LINE_LN);
 
 	out.x2 = out.x1 + help_x;
 	out.y2 = out.y1 + help_y;
@@ -114,14 +116,33 @@ static line_coordinates_t aircraft_get_bearing_line (SDL_Rect *for_this, short b
 ///	GLOBAL FUNCTIONS
 /// ==================================================================================================
 
-void aircraft_draw_with_bearing_line (SDL_Renderer *renderer, aircraft_stv_t *aircraft)
+/**
+ *
+ * @param renderer
+ * @param aircraft
+ */
+void aircraft_draw_w_bearing_line (SDL_Renderer *renderer, aircraft_stv_t *aircraft)
 {
-	// point 0,0 is in top left corner. Width goes along x-axis towards right. height goes along
+	const SDL_Point point = coordinates_get_point_from_latlon(aircraft->lon, aircraft->lat);
+
+	// point x=0,y=0 is in top left corner. Width goes along x-axis towards right. height goes along
 	// y-axis towards down
-	SDL_Rect rectangle = {.x = 40, .y = 40, .w = 15, .h = 15};
+	SDL_Rect rectangle = {.x = point.x,
+						  .y = point.y,
+						  .w = CONFIG_DRAW_AIRCRAFT_SQUARE_SIZ,
+						  .h = CONFIG_DRAW_AIRCRAFT_SQUARE_SIZ};
 
 	SDL_SetRenderDrawColor (renderer, 255, 255, 255, 0);
 	SDL_RenderDrawRect (renderer, &rectangle);
-	const line_coordinates_t line = aircraft_get_bearing_line (&rectangle, (++aircraft->bearing) % 360);
+	const line_coordinates_t line =
+		aircraft_get_bearing_line (&rectangle, aircraft->bearing % 360);
 	SDL_RenderDrawLine (renderer, line.x1, line.y1, line.x2, line.y2);
+}
+
+void aircraft_draw_w_bearing_line_label (SDL_Renderer *renderer, aircraft_stv_t *aircraft,
+										 char *callsign)
+{
+	(void)callsign;
+
+	aircraft_draw_w_bearing_line(renderer, aircraft);
 }

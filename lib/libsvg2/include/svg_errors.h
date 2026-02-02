@@ -1,6 +1,8 @@
 #ifndef __svg_errors_h__
 #define __svg_errors_h__
 
+#pragma GCC system_header		// ML
+
 #ifdef __cplusplus
 extern "C" {
 #endif

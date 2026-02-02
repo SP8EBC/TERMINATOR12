@@ -1,16 +1,14 @@
 /*
- * aircraft.h
+ * coordinates.h
  *
- *  Created on: Feb 1, 2026
+ *  Created on: Feb 2, 2026
  *      Author: mateusz
  */
 
-#ifndef SRC_DRAW_AIRCRAFT_H_
-#define SRC_DRAW_AIRCRAFT_H_
+#ifndef SRC_COORDINATES_H_
+#define SRC_COORDINATES_H_
 
 #include <SDL2/SDL.h>
-
-#include "types/aircraft_stv_t.h"
 
 /// ==================================================================================================
 ///	GLOBAL DEFINITIONS
@@ -28,20 +26,7 @@
 ///	GLOBAL FUNCTIONS
 /// ==================================================================================================
 
-/**
- *
- * @param aircraft state vector, altitude, coordinates etc.
- * @param aircraft
- */
-void aircraft_draw_w_bearing_line (SDL_Renderer *renderer, aircraft_stv_t *aircraft);
+SDL_Point coordinates_get_point_from_latlon(float longitude, float latitude);
 
-/**
- *
- * @param renderer
- * @param aircraft state vector, altitude, coordinates etc.
- * @param callsign which must be 7 characters and space padded if a string is shorter.
- */
-void aircraft_draw_w_bearing_line_label (SDL_Renderer *renderer, aircraft_stv_t *aircraft,
-										 char *callsign);
 
-#endif /* SRC_DRAW_AIRCRAFT_H_ */
+#endif /* SRC_COORDINATES_H_ */
