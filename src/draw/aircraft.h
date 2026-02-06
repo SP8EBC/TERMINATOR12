@@ -32,8 +32,9 @@
  *
  * @param aircraft state vector, altitude, coordinates etc.
  * @param aircraft
+ * @return rectangle at display coordinates representing
  */
-void aircraft_draw_w_bearing_line (SDL_Renderer *renderer, aircraft_stv_t *aircraft);
+SDL_Rect aircraft_draw_w_bearing_line (SDL_Renderer *renderer, aircraft_stv_t *aircraft);
 
 /**
  *

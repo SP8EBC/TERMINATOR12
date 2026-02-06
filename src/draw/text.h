@@ -10,7 +10,6 @@
 
 #include <SDL2/SDL.h>
 
-
 /// ==================================================================================================
 ///	GLOBAL DEFINITIONS
 /// ==================================================================================================
@@ -27,7 +26,14 @@
 ///	GLOBAL FUNCTIONS
 /// ==================================================================================================
 
-void draw_text_test(SDL_Renderer *renderer, const int font_size);
-
+/**
+ *
+ * @param renderer
+ * @param font_size
+ * @param text
+ * @param x
+ * @param y
+ */
+void text_draw (SDL_Renderer *renderer, const int font_size, const char *text, int x, int y);
 
 #endif /* SRC_DRAW_TEXT_H_ */

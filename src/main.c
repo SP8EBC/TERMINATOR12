@@ -54,8 +54,11 @@ int main (int argc, char *argv[])
 		SDL_SetRenderDrawColor (renderer, 0, 0, 0, 0);
 		SDL_RenderClear (renderer);
 		stv.bearing++;
-		aircraft_draw_w_bearing_line (renderer, &stv);
-		draw_text_test(renderer, 11);
+		if (stv.bearing > 359) {
+			stv.bearing = 0;
+		}
+		aircraft_draw_w_bearing_line_label(renderer, &stv, "SPSWWW");
+		//aircraft_draw_w_bearing_line (renderer, &stv);
 		//		SDL_SetRenderDrawColor (renderer, 255, 255, 255, 0);
 		//		SDL_RenderDrawRect (renderer, &rectangle);
 		//		const line_coordinates_t line = main_get_bearing_line(&rectangle, (++bearing) %

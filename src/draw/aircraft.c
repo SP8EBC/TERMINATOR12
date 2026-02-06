@@ -8,6 +8,7 @@
  */
 
 #include "draw/aircraft.h"
+#include "draw/text.h"
 #include "types/line_coordinates_t.h"
 
 #include "coordinates.h"
@@ -103,8 +104,10 @@ static line_coordinates_t aircraft_get_bearing_line (SDL_Rect *for_this, short b
 
 	// calculate end point basing on angle
 
-	int help_x = (int)round (cos ((double)sdlangle * (M_PI / 180.0)) * CONFIG_DRAW_AIRCRAFT_BEARING_LINE_LN);
-	int help_y = (int)round (sin ((double)sdlangle * (M_PI / 180.0)) * CONFIG_DRAW_AIRCRAFT_BEARING_LINE_LN);
+	int help_x =
+		(int)round (cos ((double)sdlangle * (M_PI / 180.0)) * CONFIG_DRAW_AIRCRAFT_BEARING_LINE_LN);
+	int help_y =
+		(int)round (sin ((double)sdlangle * (M_PI / 180.0)) * CONFIG_DRAW_AIRCRAFT_BEARING_LINE_LN);
 
 	out.x2 = out.x1 + help_x;
 	out.y2 = out.y1 + help_y;
@@ -121,9 +124,9 @@ static line_coordinates_t aircraft_get_bearing_line (SDL_Rect *for_this, short b
  * @param renderer
  * @param aircraft
  */
-void aircraft_draw_w_bearing_line (SDL_Renderer *renderer, aircraft_stv_t *aircraft)
+SDL_Rect aircraft_draw_w_bearing_line (SDL_Renderer *renderer, aircraft_stv_t *aircraft)
 {
-	const SDL_Point point = coordinates_get_point_from_latlon(aircraft->lon, aircraft->lat);
+	const SDL_Point point = coordinates_get_point_from_latlon (aircraft->lon, aircraft->lat);
 
 	// point x=0,y=0 is in top left corner. Width goes along x-axis towards right. height goes along
 	// y-axis towards down
@@ -134,9 +137,10 @@ void aircraft_draw_w_bearing_line (SDL_Renderer *renderer, aircraft_stv_t *aircr
 
 	SDL_SetRenderDrawColor (renderer, 255, 255, 255, 0);
 	SDL_RenderDrawRect (renderer, &rectangle);
-	const line_coordinates_t line =
-		aircraft_get_bearing_line (&rectangle, aircraft->bearing % 360);
+	const line_coordinates_t line = aircraft_get_bearing_line (&rectangle, aircraft->bearing % 360);
 	SDL_RenderDrawLine (renderer, line.x1, line.y1, line.x2, line.y2);
+
+	return rectangle;
 }
 
 void aircraft_draw_w_bearing_line_label (SDL_Renderer *renderer, aircraft_stv_t *aircraft,
@@ -144,5 +148,23 @@ void aircraft_draw_w_bearing_line_label (SDL_Renderer *renderer, aircraft_stv_t 
 {
 	(void)callsign;
 
-	aircraft_draw_w_bearing_line(renderer, aircraft);
+	// draw rectangle icon w/ bearing line
+	SDL_Rect rectangle = aircraft_draw_w_bearing_line (renderer, aircraft);
+
+	// where the label will be printed
+	SDL_Point label;
+
+	// draw on the right from the aircraft icon
+	if (aircraft->bearing < 45 || aircraft->bearing > 135) {
+		label.x = rectangle.x + CONFIG_DRAW_AIRCRAFT_SQUARE_SIZ + 3;
+		label.y = rectangle.y; // test +3
+	}
+	//else if (aircraft->bearing )
+	else {
+		// draw below the aircraft icon
+		label.x = rectangle.x;
+		label.y = rectangle.y + CONFIG_DRAW_AIRCRAFT_SQUARE_SIZ + 3; // test +3
+	}
+
+	text_draw (renderer, 10, callsign, label.x, label.y);
 }
