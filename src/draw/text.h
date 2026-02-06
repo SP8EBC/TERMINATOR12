@@ -9,6 +9,7 @@
 #define SRC_DRAW_TEXT_H_
 
 #include <SDL2/SDL.h>
+#include <stdbool.h>
 
 /// ==================================================================================================
 ///	GLOBAL DEFINITIONS
@@ -35,5 +36,7 @@
  * @param y
  */
 void text_draw (SDL_Renderer *renderer, const int font_size, const char *text, int x, int y);
+
+void text_draw_altitude_or_fl(SDL_Renderer *renderer, const int font_size, int x, int y, unsigned altitude, bool true_for_fl);
 
 #endif /* SRC_DRAW_TEXT_H_ */

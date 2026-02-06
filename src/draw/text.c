@@ -8,6 +8,9 @@
 #include "draw/text.h"
 #include <SDL2/SDL_ttf.h>
 
+#include <stdio.h>
+#include <stdint.h>
+
 /// ==================================================================================================
 ///	LOCAL DEFINITIONS
 /// ==================================================================================================
@@ -49,4 +52,19 @@ void text_draw (SDL_Renderer *renderer, const int font_size, const char *text, i
 		SDL_Texture *mTexture = SDL_CreateTextureFromSurface (renderer, textSurface);
 		SDL_RenderCopyEx (renderer, mTexture, NULL, &renderQuad, 0, NULL, SDL_FLIP_NONE);
 	}
+}
+
+void text_draw_altitude_or_fl(SDL_Renderer *renderer, const int font_size, int x, int y, unsigned altitude, bool true_for_fl)
+{
+	char text[6]; // "FLxyz\0"
+	memset (text, 0x00, 6);
+
+	if (true_for_fl) {
+		snprintf(text, 6, "FL%03d", (uint8_t)(altitude / 100));
+	}
+	else {
+		snprintf(text, 6, "A%03d", (uint8_t)(altitude / 100));
+	}
+
+	text_draw(renderer, font_size, text ,x, y);
 }

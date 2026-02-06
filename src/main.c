@@ -43,6 +43,7 @@ int main (int argc, char *argv[])
 	aircraft_stv_t stv = {0U};
 	stv.lat = 20;
 	stv.lon = 20;
+	stv.altitude = 3500;
 
 	while (1) {
 		SDL_Event e;

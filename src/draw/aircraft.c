@@ -34,6 +34,9 @@
 #define RECT_TOP_LEFT(for_this)				{.x = for_this->x, .y = for_this->y};
 // clang-format on
 
+#define GET_X_FOR_NEWLINE(x, fontsize) (x)
+#define GET_Y_FOR_NEWLINE(y, fontsize) (y + fontsize + 2)
+
 /// ==================================================================================================
 ///	LOCAL DATA TYPES
 /// ==================================================================================================
@@ -155,16 +158,25 @@ void aircraft_draw_w_bearing_line_label (SDL_Renderer *renderer, aircraft_stv_t 
 	SDL_Point label;
 
 	// draw on the right from the aircraft icon
-	if (aircraft->bearing < 45 || aircraft->bearing > 135) {
+	if (aircraft->bearing < 80 || aircraft->bearing > 160) {
 		label.x = rectangle.x + CONFIG_DRAW_AIRCRAFT_SQUARE_SIZ + 3;
 		label.y = rectangle.y; // test +3
 	}
-	//else if (aircraft->bearing )
 	else {
 		// draw below the aircraft icon
-		label.x = rectangle.x;
-		label.y = rectangle.y + CONFIG_DRAW_AIRCRAFT_SQUARE_SIZ + 3; // test +3
+		label.x = rectangle.x + CONFIG_DRAW_AIRCRAFT_SQUARE_SIZ +
+				  (int)CONFIG_DRAW_AIRCRAFT_BEARING_LINE_LN + 3;
+		label.y = rectangle.y; // test +3
 	}
 
-	text_draw (renderer, 10, callsign, label.x, label.y);
+	// draw callsign
+	text_draw (renderer, CONFIG_DRAW_AIRCRAFT_LABEL_FONT_SIZE, callsign, label.x, label.y);
+
+	// draw altitude
+	text_draw_altitude_or_fl (renderer,
+							  CONFIG_DRAW_AIRCRAFT_LABEL_FONT_SIZE,
+							  GET_X_FOR_NEWLINE (label.x, CONFIG_DRAW_AIRCRAFT_LABEL_FONT_SIZE),
+							  GET_Y_FOR_NEWLINE (label.y, CONFIG_DRAW_AIRCRAFT_LABEL_FONT_SIZE),
+							  aircraft->altitude,
+							  false);
 }
