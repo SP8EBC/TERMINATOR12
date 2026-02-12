@@ -15,6 +15,8 @@
 ///	LOCAL DEFINITIONS
 /// ==================================================================================================
 
+#define TEXT_BUFFER_SHORT_LN	(512)
+
 /// ==================================================================================================
 ///	LOCAL DATA TYPES
 /// ==================================================================================================
@@ -22,6 +24,8 @@
 /// ==================================================================================================
 ///	LOCAL VARIABLES
 /// ==================================================================================================
+
+static char text_buffer_short[TEXT_BUFFER_SHORT_LN] = {0U};
 
 /// ==================================================================================================
 ///	LOCAL FUNCTIONS
@@ -31,6 +35,14 @@
 ///	GLOBAL FUNCTIONS
 /// ==================================================================================================
 
+/**
+ *
+ * @param renderer
+ * @param font_size
+ * @param text
+ * @param x
+ * @param y
+ */
 void text_draw (SDL_Renderer *renderer, const int font_size, const char *text, int x, int y)
 {
 	TTF_Font *font = TTF_OpenFont ("DejaVuSansMono.ttf", font_size);
@@ -54,6 +66,31 @@ void text_draw (SDL_Renderer *renderer, const int font_size, const char *text, i
 	}
 }
 
+/**
+ *
+ * @param renderer
+ * @param font_size
+ * @param text
+ * @param ln
+ * @param x
+ * @param y
+ */
+void text_ndraw (SDL_Renderer *renderer, const int font_size, const char *text, size_t ln, int x, int y)
+{
+	memset(text_buffer_short, 0x00, ln + 1);
+	strncpy(text_buffer_short, text, ln);
+	text_draw (renderer, font_size, text_buffer_short, x, y);
+}
+
+/**
+ *
+ * @param renderer
+ * @param font_size
+ * @param x
+ * @param y
+ * @param altitude
+ * @param true_for_fl
+ */
 void text_draw_altitude_or_fl(SDL_Renderer *renderer, const int font_size, int x, int y, unsigned altitude, bool true_for_fl)
 {
 	char text[6]; // "FLxyz\0"

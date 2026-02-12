@@ -9,16 +9,21 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
+
 #include <stdio.h>
 #include <unistd.h>
 
 #include "types/aircraft_stv_t.h"
 #include "draw/aircraft.h"
 #include "draw/text.h"
+#include "draw/geography.h"
 
 int main (int argc, char *argv[])
 {
 	(void) argc;
+
+	const char * skrzyczne = "SKRZYCZNE\0";
+	const char * zar = "ZAR\0";
 
 	svgDrawing *ptSvg;
 	const int initres = SDL_Init (SDL_INIT_VIDEO);
@@ -59,6 +64,8 @@ int main (int argc, char *argv[])
 			stv.bearing = 0;
 		}
 		aircraft_draw_w_bearing_line_label(renderer, &stv, "SPSWWW");
+		geography_draw_mountain(renderer, 100, 100, skrzyczne, strlen(skrzyczne));
+		geography_draw_mountain(renderer, 180, 110, zar, strlen(zar));
 		//aircraft_draw_w_bearing_line (renderer, &stv);
 		//		SDL_SetRenderDrawColor (renderer, 255, 255, 255, 0);
 		//		SDL_RenderDrawRect (renderer, &rectangle);
@@ -96,3 +103,19 @@ An SDL_Renderer is a rendering context that provides hardware-accelerated 2D ren
 the rendering process and allows you to draw primitives, textures, and perform transformations
 efficiently.
  */
+
+
+/*!
+\brief Draw polygon with alpha blending.
+
+\param renderer The renderer to draw on.
+\param vx Vertex array containing X coordinates of the points of the polygon.
+\param vy Vertex array containing Y coordinates of the points of the polygon.
+\param n Number of points in the vertex array. Minimum number is 3.
+\param color The color value of the polygon to draw (0xRRGGBBAA).
+
+\returns Returns 0 on success, -1 on failure.
+
+
+int GFX_polygonColor(SDL_Renderer * renderer, const Sint16 * vx, const Sint16 * vy, int n, Uint32 color)
+*/
