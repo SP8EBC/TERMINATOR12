@@ -17,6 +17,7 @@
 #include "draw/aircraft.h"
 #include "draw/text.h"
 #include "draw/geography.h"
+#include "draw/airspace.h"
 
 int main (int argc, char *argv[])
 {
@@ -71,6 +72,7 @@ int main (int argc, char *argv[])
 		//		SDL_RenderDrawRect (renderer, &rectangle);
 		//		const line_coordinates_t line = main_get_bearing_line(&rectangle, (++bearing) %
 		//360); 		SDL_RenderDrawLine (renderer, line.x1, line.y1, line.x2, line.y2);
+		airspace_test(renderer, stv.bearing);
 		SDL_RenderPresent (renderer);
 	}
 

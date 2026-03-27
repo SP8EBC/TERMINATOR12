@@ -36,12 +36,12 @@ static char text_buffer_short[TEXT_BUFFER_SHORT_LN] = {0U};
 /// ==================================================================================================
 
 /**
- *
- * @param renderer
- * @param font_size
- * @param text
- * @param x
- * @param y
+ * Draw given text on the screen
+ * @param renderer pointer to globally used renderer
+ * @param font_size to be used to draw
+ * @param text null terminated string. There is no size limit per-se
+ * @param x display coordinate to draw this text at
+ * @param y display coordinate to draw this text at
  */
 void text_draw (SDL_Renderer *renderer, const int font_size, const char *text, int x, int y)
 {
@@ -67,19 +67,29 @@ void text_draw (SDL_Renderer *renderer, const int font_size, const char *text, i
 }
 
 /**
- *
- * @param renderer
- * @param font_size
- * @param text
- * @param ln
- * @param x
- * @param y
+ * Draw the text on the screen, taking into account a size limit. If a value of ln is smaller than
+ * strlen(text), this function will use intermediate buffer to extract first ln characters from the
+ * string.
+ * @param renderer pointer to globally used renderer
+ * @param font_size to be used to draw
+ * @param text null terminated string.
+ * @param ln maximum size to be printed. may be less than strlen(text)
+ * @param x display coordinate to draw this text at
+ * @param y display coordinate to draw this text at
  */
 void text_ndraw (SDL_Renderer *renderer, const int font_size, const char *text, size_t ln, int x, int y)
 {
-	memset(text_buffer_short, 0x00, ln + 1);
-	strncpy(text_buffer_short, text, ln);
-	text_draw (renderer, font_size, text_buffer_short, x, y);
+	if (strlen(text) > ln)
+	{
+		memset(text_buffer_short, 0x00, ln + 1);
+		strncpy(text_buffer_short, text, ln);
+		text_draw (renderer, font_size, text_buffer_short, x, y);
+	}
+	else
+	{
+		text_draw (renderer, font_size, text, x, y);
+	}
+
 }
 
 /**
