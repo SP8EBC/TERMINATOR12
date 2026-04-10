@@ -8,14 +8,14 @@
  */
 
 #include "draw/aircraft.h"
+
+#include <math.h>
+
 #include "draw/text.h"
 #include "types/line_coordinates_t.h"
 
 #include "coordinates.h"
-
 #include "draw_aircraft_config.h"
-
-#include <math.h>
 
 /// ==================================================================================================
 ///	LOCAL DEFINITIONS
@@ -24,17 +24,76 @@
 #define BEARING_TO_SDLANGLE(b) ((b + 270) % 360)
 
 // clang-format off
+/**
+ * @brief return coordinates of a middle of an upper border of the rectangle
+ * @note used to get a starting point of a bearing line
+ * @param for_this rectangle structure
+ */
 #define RECT_MIDDLE_UPPER_BODER(for_this) 	{.x = for_this->x + for_this->w / 2, .y = for_this->y};
+
+/**
+ * @brief return coordinates of a top right corner of the rectangle
+ * @note used to get a starting point of a bearing line
+ * @param for_this rectangle structure
+ */
 #define RECT_TOP_RIGHT(for_this)		  	{.x = for_this->x + for_this->w, .y = for_this->y};
+
+/**
+ * @brief return coordinates of a middle of a right border of the rectangle
+ * @note used to get a starting point of a bearing line
+ * @param for_this rectangle structure
+ */
 #define RECT_MIDDLE_RIGHT_BORDER(for_this)	{.x = for_this->x + for_this->w, .y = for_this->y + for_this->h / 2};
+
+/**
+ * @brief return coordinates of the bottom right corner of the rectangle
+ * @note used to get a starting point of a bearing line
+ * @param for_this rectangle structure
+ */
 #define RECT_BOTTOM_RIGHT(for_this) 		{.x = for_this->x + for_this->w, .y = for_this->y + for_this->h};
+
+/**
+ * @brief return coordinates of a middle of an bottom border of the rectangle
+ * @note used to get a starting point of a bearing line
+ * @param for_this rectangle structure
+ */
 #define RECT_MIDDLE_BOTTOM_BORDER(for_this) {.x = for_this->x + for_this->w / 2, .y = for_this->y + for_this->h};
+
+/**
+ * @brief return coordinates of the bottom left corner of the rectangle
+ * @note used to get a starting point of a bearing line
+ * @param for_this rectangle structure
+ */
 #define RECT_BOTTOM_LEFT(for_this)			{.x = for_this->x, .y = for_this->y + for_this->h};
+
+/**
+ * @brief return coordinates of a middle of a left border of the rectangle
+ * @note used to get a starting point of a bearing line
+ * @param for_this rectangle structure
+ */
 #define RECT_MIDDLE_LEFT_BORDER(for_this)	{.x = for_this->x, .y = for_this->y + for_this->h / 2};
+
+/**
+ * @brief return coordinates of top left corner of the rectangle
+ * @note used to get a starting point of a bearing line
+ * @param for_this rectangle structure
+ */
 #define RECT_TOP_LEFT(for_this)				{.x = for_this->x, .y = for_this->y};
 // clang-format on
 
+/**
+ * @brief gets X coordinate for a new line under the previous one, starting at coordinate X
+ * @note basically X coordinate doesn't change
+ * @param X coordinate of a line under which the new one shall be typed
+ * @param fontsize
+ */
 #define GET_X_FOR_NEWLINE(x, fontsize) (x)
+
+/**
+ * @brief gets Y coordinate for a new line under the previous one, starting at coordinate Y
+ * @param y coordinate of a line under which the new one shall be typed
+ * @param fontsize
+ */
 #define GET_Y_FOR_NEWLINE(y, fontsize) (y + fontsize + 2)
 
 /// ==================================================================================================

@@ -5,26 +5,26 @@
  *      Author: mateusz
  */
 
-#include "svg.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
-
-
 #include <stdio.h>
+#include <svg.h>
 #include <unistd.h>
 
-#include "types/aircraft_stv_t.h"
 #include "draw/aircraft.h"
-#include "draw/text.h"
-#include "draw/geography.h"
 #include "draw/airspace.h"
+#include "draw/geography.h"
+#include "draw/text.h"
+#include "types/aircraft_stv_t.h"
+
+#include "main_application_config.h"
 
 int main (int argc, char *argv[])
 {
-	(void) argc;
+	(void)argc;
 
-	const char * skrzyczne = "SKRZYCZNE\0";
-	const char * zar = "ZAR\0";
+	const char *skrzyczne = "SKRZYCZNE\0";
+	const char *zar = "ZAR\0";
 
 	svgDrawing *ptSvg;
 	const int initres = SDL_Init (SDL_INIT_VIDEO);
@@ -35,13 +35,13 @@ int main (int argc, char *argv[])
 		return -1;
 	}
 
-	TTF_Init();
+	TTF_Init ();
 
 	SDL_Window *window = SDL_CreateWindow ("TERMINATOR12",
 										   SDL_WINDOWPOS_UNDEFINED,
 										   SDL_WINDOWPOS_UNDEFINED,
-										   1024,
-										   768,
+										   MAIN_WIDTH,
+										   MAIN_HEIGHT,
 										   SDL_WINDOW_SHOWN);
 
 	SDL_Renderer *renderer = SDL_CreateRenderer (window, -1, SDL_RENDERER_ACCELERATED);
@@ -64,22 +64,22 @@ int main (int argc, char *argv[])
 		if (stv.bearing > 359) {
 			stv.bearing = 0;
 		}
-		aircraft_draw_w_bearing_line_label(renderer, &stv, "SPSWWW");
-		geography_draw_mountain(renderer, 100, 100, skrzyczne, strlen(skrzyczne));
-		geography_draw_mountain(renderer, 180, 110, zar, strlen(zar));
-		//aircraft_draw_w_bearing_line (renderer, &stv);
+		aircraft_draw_w_bearing_line_label (renderer, &stv, "SPSWWW");
+		geography_draw_mountain (renderer, 100, 100, skrzyczne, strlen (skrzyczne));
+		geography_draw_mountain (renderer, 180, 110, zar, strlen (zar));
+		// aircraft_draw_w_bearing_line (renderer, &stv);
 		//		SDL_SetRenderDrawColor (renderer, 255, 255, 255, 0);
 		//		SDL_RenderDrawRect (renderer, &rectangle);
 		//		const line_coordinates_t line = main_get_bearing_line(&rectangle, (++bearing) %
-		//360); 		SDL_RenderDrawLine (renderer, line.x1, line.y1, line.x2, line.y2);
-		airspace_test(renderer, stv.bearing);
+		// 360); 		SDL_RenderDrawLine (renderer, line.x1, line.y1, line.x2, line.y2);
+		airspace_test (renderer, stv.bearing);
 		SDL_RenderPresent (renderer);
 	}
 
 	SDL_DestroyRenderer (renderer);
 	SDL_DestroyWindow (window);
 
-	TTF_Quit();
+	TTF_Quit ();
 	SDL_Quit ();
 
 	ptSvg = svgOpenFile (argv[1]);
@@ -106,7 +106,6 @@ the rendering process and allows you to draw primitives, textures, and perform t
 efficiently.
  */
 
-
 /*!
 \brief Draw polygon with alpha blending.
 
@@ -119,5 +118,6 @@ efficiently.
 \returns Returns 0 on success, -1 on failure.
 
 
-int GFX_polygonColor(SDL_Renderer * renderer, const Sint16 * vx, const Sint16 * vy, int n, Uint32 color)
+int GFX_polygonColor(SDL_Renderer * renderer, const Sint16 * vx, const Sint16 * vy, int n, Uint32
+color)
 */

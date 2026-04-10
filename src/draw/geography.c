@@ -6,18 +6,17 @@
  */
 
 #include "geography.h"
-#include "coordinates.h"
-#include "text.h"
-
-#include <draw_aircraft_config.h>
-#include <draw_geography_config.h>
-
-#include <assert.h>
-#include <stddef.h>
-#include <stdint.h>
 
 #include <SDL2/SDL2_gfxPrimitives.h>
 #include <SDL2/SDL2_gfxPrimitives_font.h>
+#include <assert.h>
+#include <draw_aircraft_config.h>
+#include <draw_geography_config.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#include "coordinates.h"
+#include "text.h"
 /// ==================================================================================================
 ///	LOCAL DEFINITIONS
 /// ==================================================================================================
