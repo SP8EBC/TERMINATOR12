@@ -7,6 +7,8 @@
 
 #include "coordinates.h"
 
+#include <stdbool.h>
+
 #include "types/coordinates_t.h"
 
 #include "main_application_config.h"
@@ -37,8 +39,8 @@ static const coordinates_t coordinates_viewport_limit = {
  * @brief these are coordinates of a point in top left corner
  */
 static coordinates_t coordinates_viewport_current = {
-		.latitude = MAIN_VIEWPORT_DEFAULT_LOCATION (COORDINATES_GET_VIEWPORT_X),
-		.longitude = MAIN_VIEWPORT_DEFAULT_LOCATION (COORDINATES_GET_VIEWPORT_Y)};
+	.latitude = MAIN_VIEWPORT_DEFAULT_LOCATION (COORDINATES_GET_VIEWPORT_X),
+	.longitude = MAIN_VIEWPORT_DEFAULT_LOCATION (COORDINATES_GET_VIEWPORT_Y)};
 
 /**
  * @brief how many decimal degrees of longitude corresponds to one pixel on the screen, basically
@@ -52,15 +54,31 @@ static coordinates_t coordinates_viewport_current = {
  */
 static double coordinates_degrees_longitude_per_pixel;
 
+static double coordinates_degrees_latitude_per_pixel;
+
 static double coordinates_scale = 1.0;
 
 /// ==================================================================================================
 ///	LOCAL FUNCTIONS
 /// ==================================================================================================
 
-double deg2rad (double deg)
+static double deg2rad (double deg)
 {
 	return deg * M_PI / 180.0;
+}
+
+static double rad2deg (double rad)
+{
+	return rad * 180.0 / M_PI;
+}
+
+static double normalize_lon_deg (double lon_deg)
+{
+	while (lon_deg > 180.0)
+		lon_deg -= 360.0;
+	while (lon_deg < -180.0)
+		lon_deg += 360.0;
+	return lon_deg;
 }
 
 /**
@@ -88,7 +106,7 @@ double deg2rad (double deg)
  * @see deg2rad() - Required helper function for degree-to-radian conversion.
  * @see COORDINATES_EARTH_RADIUS - Global constant defining Earth's radius in meters.
  */
-double gps_distance (double lat1, double lon1, double lat2, double lon2)
+double coordinates_wsg84_distance (double lat1, double lon1, double lat2, double lon2)
 {
 	double dlat = deg2rad (lat2 - lat1);
 	double dlon = deg2rad (lon2 - lon1);
@@ -105,6 +123,175 @@ double gps_distance (double lat1, double lon1, double lat2, double lon2)
 }
 
 /**
+ * @brief Computes destination point from:
+ *  @param[in] lat1_deg   start latitude in degrees
+ *  @param[in] lon1_deg   start longitude in degrees
+ *  @param[in] bearing_deg initial bearing in degrees clockwise from true north
+ *  @param[in] distance_m distance in meters
+ *   @param[out] lat2_deg  destination latitude in degrees
+ *   @param[out] lon2_deg  destination longitude in degrees
+ *
+ * Returns:
+ *   true on success
+ */
+bool coordinates_wgs84_destination_point (double lat1_deg, double lon1_deg, double bearing_deg,
+										  double distance_m, double *lat2_deg, double *lon2_deg)
+{
+	if (!lat2_deg || !lon2_deg)
+		return false;
+
+	/* WGS-84 ellipsoid constants:
+	 * a = semi-major axis (equatorial radius)
+	 * f = flattening
+	 * b = semi-minor axis (polar radius)
+	 */
+	const double a = 6378137.0;
+	const double f = 1.0 / 298.257223563;
+	const double b = a * (1.0 - f);
+
+	/* Convert input geographic coordinates and heading to radians
+	 * because C trig functions use radians.
+	 */
+	const double phi1 = deg2rad (lat1_deg);		 /* geodetic latitude of start point */
+	const double lambda1 = deg2rad (lon1_deg);	 /* longitude of start point */
+	const double alpha1 = deg2rad (bearing_deg); /* initial forward azimuth at start */
+
+	/* Trig values of the initial azimuth.
+	 * Precomputed once because they are reused several times.
+	 */
+	const double sinAlpha1 = sin (alpha1); /* sin(initial bearing) */
+	const double cosAlpha1 = cos (alpha1); /* cos(initial bearing) */
+
+	/* Reduced latitude U1.
+	 * Vincenty works on the auxiliary sphere rather than directly on the ellipsoid.
+	 * U1 is the "parametric" or "reduced" latitude corresponding to phi1.
+	 *
+	 * tanU1 = (1-f) * tan(phi1)
+	 */
+	const double tanU1 = (1.0 - f) * tan (phi1); /* tangent of reduced latitude at start */
+	const double cosU1 = 1.0 / sqrt (1.0 + tanU1 * tanU1); /* cosine of reduced latitude U1 */
+	const double sinU1 = tanU1 * cosU1;					   /* sine of reduced latitude U1 */
+
+	/* sigma1 is the angular distance on the auxiliary sphere
+	 * from the equator to the start point, measured along the geodesic.
+	 */
+	const double sigma1 = atan2 (tanU1, cosAlpha1);
+
+	/* sinAlpha is the azimuth of the geodesic at the equator
+	 * on the auxiliary sphere; it stays constant along the geodesic.
+	 */
+	const double sinAlpha = cosU1 * sinAlpha1;
+
+	/* cosSqAlpha = cos(alpha)^2
+	 * This appears repeatedly in Vincenty's series expansions.
+	 */
+	const double cosSqAlpha = 1.0 - sinAlpha * sinAlpha;
+
+	/* uSq is the "ellipsoid shape" parameter for this geodesic.
+	 * It depends on Earth flattening and on the azimuth of the path.
+	 * Larger uSq means a stronger ellipsoidal correction is needed.
+	 */
+	const double uSq = cosSqAlpha * (a * a - b * b) / (b * b);
+
+	/* A and B are series coefficients used to correct the spherical
+	 * arc-length solution so it matches the ellipsoidal geodesic.
+	 */
+	const double A = 1.0 + uSq / 16384.0 * (4096.0 + uSq * (-768.0 + uSq * (320.0 - 175.0 * uSq)));
+	const double B = uSq / 1024.0 * (256.0 + uSq * (-128.0 + uSq * (74.0 - 47.0 * uSq)));
+
+	/* sigma is the current estimate of the angular distance on the
+	 * auxiliary sphere from the start point to the destination point.
+	 *
+	 * First guess: distance / (b*A)
+	 */
+	double sigma = distance_m / (b * A);
+
+	/* sigma_prev stores the previous iteration's sigma so we can test convergence. */
+	double sigma_prev;
+
+	/* These are updated each iteration:
+	 * sinSigma    = sin(sigma)
+	 * cosSigma    = cos(sigma)
+	 * cos2SigmaM  = cos(2*sigma_m), where sigma_m is the angular distance
+	 *               from the equator to the midpoint of the geodesic segment
+	 *               on the auxiliary sphere
+	 * deltaSigma  = correction term applied to sigma
+	 */
+	double sinSigma, cosSigma, cos2SigmaM, deltaSigma;
+
+	/* Iteration counter to avoid infinite loops if convergence fails. */
+	int iter = 0;
+
+	do {
+		/* cos(2*sigma_m), where:
+		 * 2*sigma_m = 2*sigma1 + sigma
+		 *
+		 * This midpoint-related term appears in Vincenty's correction formula.
+		 */
+		cos2SigmaM = cos (2.0 * sigma1 + sigma);
+
+		/* Trig values of current sigma estimate. */
+		sinSigma = sin (sigma);
+		cosSigma = cos (sigma);
+
+		/* Ellipsoidal correction to sigma.
+		 * This is the key term that refines the auxiliary-sphere arc length
+		 * into the ellipsoidal geodesic solution.
+		 */
+		deltaSigma = B * sinSigma *
+					 (cos2SigmaM + B / 4.0 *
+									   (cosSigma * (-1.0 + 2.0 * cos2SigmaM * cos2SigmaM) -
+										B / 6.0 * cos2SigmaM * (-3.0 + 4.0 * sinSigma * sinSigma) *
+											(-3.0 + 4.0 * cos2SigmaM * cos2SigmaM)));
+
+		/* Save previous sigma before updating. */
+		sigma_prev = sigma;
+
+		/* New refined sigma estimate. */
+		sigma = distance_m / (b * A) + deltaSigma;
+
+	} while (fabs (sigma - sigma_prev) > 1e-12 && ++iter < 200);
+
+	if (iter >= 200)
+		return false;
+
+	/* tmp is an intermediate quantity used in the final latitude formula
+	 * and in the reverse-azimuth expression.
+	 */
+	const double tmp = sinU1 * sinSigma - cosU1 * cosSigma * cosAlpha1;
+
+	/* phi2 is the destination geodetic latitude on the ellipsoid. */
+	const double phi2 = atan2 (sinU1 * cosSigma + cosU1 * sinSigma * cosAlpha1,
+							   (1.0 - f) * sqrt (sinAlpha * sinAlpha + tmp * tmp));
+
+	/* lambda is the difference in longitude on the auxiliary sphere
+	 * before applying the ellipsoidal longitude correction.
+	 */
+	const double lambda =
+		atan2 (sinSigma * sinAlpha1, cosU1 * cosSigma - sinU1 * sinSigma * cosAlpha1);
+
+	/* C is another series coefficient used in the longitude correction term. */
+	const double C = f / 16.0 * cosSqAlpha * (4.0 + f * (4.0 - 3.0 * cosSqAlpha));
+
+	/* L is the corrected ellipsoidal longitude difference from start to destination.
+	 * This is what must be added to lambda1 to get the destination longitude.
+	 */
+	const double L =
+		lambda -
+		(1.0 - C) * f * sinAlpha *
+			(sigma +
+			 C * sinSigma * (cos2SigmaM + C * cosSigma * (-1.0 + 2.0 * cos2SigmaM * cos2SigmaM)));
+
+	/* Absolute longitude of destination point in radians. */
+	const double lambda2 = lambda1 + L;
+
+	/* Convert final answers back to degrees. */
+	*lat2_deg = rad2deg (phi2);
+	*lon2_deg = normalize_lon_deg (rad2deg (lambda2));
+
+	return true;
+}
+/**
  * @brief Converts WSG84-GPS coordinates to mercator projection coordinates, used for displaying
  * @note Clamping latitude is important because the Mercator projection tends to infinity at the
  * poles, and practical Web Mercator usage limits latitude to about 85.0511 degrees.
@@ -113,12 +300,12 @@ double gps_distance (double lat1, double lon1, double lat2, double lon2)
  * @param latitude_deg in decimal degrees (will be converted to radians inside)
  * @return
  */
-SDL_Point mercator_project (double scale, double longitude_deg, double latitude_deg)
+coordinates_t coordinates_mercator_project (double scale, double longitude_deg, double latitude_deg)
 {
 	const double DEG_TO_RAD = M_PI / 180.0;
 	const double MAX_LAT = 85.05112878; // practical Mercator limit
 
-	SDL_Point p;
+	coordinates_t p;
 
 	if (latitude_deg > MAX_LAT)
 		latitude_deg = MAX_LAT;
@@ -128,12 +315,11 @@ SDL_Point mercator_project (double scale, double longitude_deg, double latitude_
 	double lon = longitude_deg * DEG_TO_RAD;
 	double lat = latitude_deg * DEG_TO_RAD;
 
-	p.x = scale * lon;
-	p.y = scale * log (tan (M_PI / 4.0 + lat / 2.0));
+	p.longitude = (scale * lon);
+	p.latitude = (scale * log (tan (M_PI / 4.0 + lat / 2.0)));
 
 	return p;
 }
-
 
 /**
  * @brief Convert Mercator X, Y coordinates back to longitude and latitude.
@@ -159,19 +345,37 @@ SDL_Point mercator_project (double scale, double longitude_deg, double latitude_
  *
  * @see mercator_project()  Forward projection from longitude/latitude to Mercator (x, y).
  */
-coordinates_t mercator_inverse(double scale, double x, double y)
+coordinates_t coordinates_mercator_inverse (double scale, double x, double y)
 {
-    const double RAD_TO_DEG = 180.0 / M_PI;
+	const double RAD_TO_DEG = 180.0 / M_PI;
 
-    coordinates_t ll;
+	coordinates_t ll;
 
-    double lon = x / scale;
-    double lat = 2.0 * atan(exp(y / scale)) - M_PI / 2.0;
+	double lon = x / scale;
+	double lat = 2.0 * atan (exp (y / scale)) - M_PI / 2.0;
 
-    ll.longitude = lon * RAD_TO_DEG;
-    ll.latitude  = lat  * RAD_TO_DEG;
+	ll.longitude = lon * RAD_TO_DEG;
+	ll.latitude = lat * RAD_TO_DEG;
 
-    return ll;
+	return ll;
+}
+
+/**
+ *
+ * @param mercator
+ * @return
+ */
+SDL_Point coordinates_mercator_to_sdl (const coordinates_t mercator)
+{
+	SDL_Point out;
+
+	double x = mercator.latitude - coordinates_viewport_current.latitude;
+	double y = mercator.longitude - coordinates_viewport_current.longitude;
+
+	out.x = x / coordinates_degrees_latitude_per_pixel;
+	out.y = y / coordinates_degrees_longitude_per_pixel;
+
+	return out;
 }
 
 /// ==================================================================================================
@@ -186,10 +390,14 @@ coordinates_t mercator_inverse(double scale, double x, double y)
  */
 SDL_Point coordinates_get_point_from_latlon (float longitude, float latitude)
 {
-	SDL_Point out = {0u};
+	(void)coordinates_viewport_limit;
+	(void)coordinates_viewport_current;
+	(void)coordinates_degrees_longitude_per_pixel;
 
-	out.x = (int)longitude;
-	out.y = (int)latitude;
+	const coordinates_t mercator =
+		coordinates_mercator_project (coordinates_scale, longitude, latitude);
+
+	const SDL_Point out = coordinates_mercator_to_sdl (mercator);
 
 	return out;
 }
