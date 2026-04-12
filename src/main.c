@@ -47,9 +47,11 @@ int main (int argc, char *argv[])
 	SDL_Renderer *renderer = SDL_CreateRenderer (window, -1, SDL_RENDERER_ACCELERATED);
 
 	aircraft_stv_t stv = {0U};
-	stv.lat = 20;
-	stv.lon = 20;
+	stv.lat = 49.7194486f;
+	stv.lon = 19.1048506f;
 	stv.altitude = 3500;
+
+	// #define MAIN_VIEWPORT_DEFAULT_LOCATION(ENTRY) ENTRY (49.7481156, 18.9444758)
 
 	while (1) {
 		SDL_Event e;
@@ -65,14 +67,14 @@ int main (int argc, char *argv[])
 			stv.bearing = 0;
 		}
 		aircraft_draw_w_bearing_line_label (renderer, &stv, "SPSWWW");
-		geography_draw_mountain (renderer, 100, 100, skrzyczne, strlen (skrzyczne));
-		geography_draw_mountain (renderer, 180, 110, zar, strlen (zar));
+		geography_draw_mountain (renderer, 49.6855667f, 19.0312978f, skrzyczne, strlen (skrzyczne));
+		geography_draw_mountain (renderer, 48.7872189f, 19.2248306f, zar, strlen (zar));
 		// aircraft_draw_w_bearing_line (renderer, &stv);
 		//		SDL_SetRenderDrawColor (renderer, 255, 255, 255, 0);
 		//		SDL_RenderDrawRect (renderer, &rectangle);
 		//		const line_coordinates_t line = main_get_bearing_line(&rectangle, (++bearing) %
 		// 360); 		SDL_RenderDrawLine (renderer, line.x1, line.y1, line.x2, line.y2);
-		airspace_test (renderer, stv.bearing);
+		//airspace_test (renderer, stv.bearing);
 		SDL_RenderPresent (renderer);
 	}
 

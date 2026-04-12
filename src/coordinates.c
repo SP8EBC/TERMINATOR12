@@ -54,9 +54,9 @@ static coordinates_t coordinates_viewport_current = {
  */
 static double coordinates_degrees_longitude_per_pixel;
 
-static double coordinates_degrees_latitude_per_pixel;
+//static double coordinates_degrees_latitude_per_pixel;
 
-static double coordinates_scale = 1.0;
+static double coordinates_scale = 100.0;
 
 /// ==================================================================================================
 ///	LOCAL FUNCTIONS
@@ -360,23 +360,23 @@ coordinates_t coordinates_mercator_inverse (double scale, double x, double y)
 	return ll;
 }
 
-/**
- *
- * @param mercator
- * @return
- */
-SDL_Point coordinates_mercator_to_sdl (const coordinates_t mercator)
-{
-	SDL_Point out;
-
-	double x = mercator.latitude - coordinates_viewport_current.latitude;
-	double y = mercator.longitude - coordinates_viewport_current.longitude;
-
-	out.x = x / coordinates_degrees_latitude_per_pixel;
-	out.y = y / coordinates_degrees_longitude_per_pixel;
-
-	return out;
-}
+///**
+// *
+// * @param mercator
+// * @return
+// */
+//SDL_Point coordinates_mercator_to_sdl (const coordinates_t mercator)
+//{
+//	SDL_Point out;
+//
+//	double x = mercator.latitude - coordinates_viewport_current.latitude;
+//	double y = mercator.longitude - coordinates_viewport_current.longitude;
+//
+//	out.x = x / coordinates_degrees_latitude_per_pixel;
+//	out.y = y / coordinates_degrees_longitude_per_pixel;
+//
+//	return out;
+//}
 
 /// ==================================================================================================
 ///	GLOBAL FUNCTIONS
@@ -397,7 +397,16 @@ SDL_Point coordinates_get_point_from_latlon (float longitude, float latitude)
 	const coordinates_t mercator =
 		coordinates_mercator_project (coordinates_scale, longitude, latitude);
 
-	const SDL_Point out = coordinates_mercator_to_sdl (mercator);
+	const coordinates_t mercator_viewport_origin =
+		coordinates_mercator_project (coordinates_scale,
+									  coordinates_viewport_current.longitude,
+									  coordinates_viewport_current.latitude);
+
+
+	const double lon = mercator.longitude - mercator_viewport_origin.longitude;
+	const double lat = mercator.latitude - mercator_viewport_origin.latitude;
+
+	const SDL_Point out = {.x = -(int)(lat * 1000.0), .y = (int)(lon * 1000.0)};
 
 	return out;
 }
