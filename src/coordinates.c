@@ -7,8 +7,6 @@
 
 #include "coordinates.h"
 
-#include <stdbool.h>
-
 #include "types/coordinates_t.h"
 
 #include "main_application_config.h"
@@ -52,11 +50,13 @@ static coordinates_t coordinates_viewport_current = {
  * is around 52°N. Using the approximation: 1′ longitude≈1.852⋅cos⁡(φ) km, where φ is
  * latitude in degrees, at 52°N we have: 1′ longitude ≈ 1.852×0.615≈1.141.852×0.615≈1.14 km.
  */
-static double coordinates_degrees_longitude_per_pixel;
+// static double coordinates_degrees_longitude_per_pixel;
 
-//static double coordinates_degrees_latitude_per_pixel;
+// static double coordinates_degrees_latitude_per_pixel;
 
-static double coordinates_scale = 100.0;
+static double coordinates_scale = 1.0;
+
+static double coordinates_output_scale = 1000.0;
 
 /// ==================================================================================================
 ///	LOCAL FUNCTIONS
@@ -80,6 +80,79 @@ static double normalize_lon_deg (double lon_deg)
 		lon_deg += 360.0;
 	return lon_deg;
 }
+
+/**
+ * @brief Converts WSG84-GPS coordinates to mercator projection coordinates, used for displaying
+ * @note Clamping latitude is important because the Mercator projection tends to infinity at the
+ * poles, and practical Web Mercator usage limits latitude to about 85.0511 degrees.
+ * @param scale
+ * @param longitude_deg in decimal degrees (will be converted to radians inside)
+ * @param latitude_deg in decimal degrees (will be converted to radians inside)
+ * @return
+ */
+coordinates_t coordinates_mercator_project (double scale, double longitude_deg, double latitude_deg)
+{
+	const double DEG_TO_RAD = M_PI / 180.0;
+	const double MAX_LAT = 85.05112878; // practical Mercator limit
+
+	coordinates_t p;
+
+	if (latitude_deg > MAX_LAT)
+		latitude_deg = MAX_LAT;
+	if (latitude_deg < -MAX_LAT)
+		latitude_deg = -MAX_LAT;
+
+	double lon = longitude_deg * DEG_TO_RAD;
+	double lat = latitude_deg * DEG_TO_RAD;
+
+	p.longitude = (scale * lon);
+	p.latitude = (scale * log (tan (M_PI / 4.0 + lat / 2.0)));
+
+	return p;
+}
+
+/**
+ * @brief Convert Mercator X, Y coordinates back to longitude and latitude.
+ *
+ * Converts Mercator-projected Cartesian coordinates (x, y) back to geographic
+ * longitude and latitude in degrees, using the same scale factor that was used
+ * for the forward projection.
+ *
+ * @note This function is the exact inverse of the Mercator projection:
+ *       x = scale * longitude_rad, y = scale * log(tan(pi/4 + latitude_rad/2)).
+ *       For practical use (e.g., Web Mercator), consider clamping latitude
+ *       output to approximately ±85.0511°.
+ *
+ * @param[in]  scale           Scale factor used in the original Mercator projection.
+ *                             Must be positive and non‑zero.
+ * @param[in]  x               Mercator X coordinate (in the same units as `scale`).
+ * @param[in]  y               Mercator Y coordinate (in the same units as `scale`).
+ *
+ * @return coordinates_t structure containing:
+ *         - longitude: longitude in degrees (-180.0 to 180.0).
+ *         - latitude:  latitude in degrees (unbounded in theory,
+ *                          but typically clamped to about ±85.0511° for Web Mercator).
+ *
+ * @see mercator_project()  Forward projection from longitude/latitude to Mercator (x, y).
+ */
+coordinates_t coordinates_mercator_inverse (double scale, double x, double y)
+{
+	const double RAD_TO_DEG = 180.0 / M_PI;
+
+	coordinates_t ll;
+
+	double lon = x / scale;
+	double lat = 2.0 * atan (exp (y / scale)) - M_PI / 2.0;
+
+	ll.longitude = lon * RAD_TO_DEG;
+	ll.latitude = lat * RAD_TO_DEG;
+
+	return ll;
+}
+
+/// ==================================================================================================
+///	GLOBAL FUNCTIONS
+/// ==================================================================================================
 
 /**
  * @brief Calculates the great-circle distance between two GPS coordinates using the Haversine
@@ -291,96 +364,6 @@ bool coordinates_wgs84_destination_point (double lat1_deg, double lon1_deg, doub
 
 	return true;
 }
-/**
- * @brief Converts WSG84-GPS coordinates to mercator projection coordinates, used for displaying
- * @note Clamping latitude is important because the Mercator projection tends to infinity at the
- * poles, and practical Web Mercator usage limits latitude to about 85.0511 degrees.
- * @param scale
- * @param longitude_deg in decimal degrees (will be converted to radians inside)
- * @param latitude_deg in decimal degrees (will be converted to radians inside)
- * @return
- */
-coordinates_t coordinates_mercator_project (double scale, double longitude_deg, double latitude_deg)
-{
-	const double DEG_TO_RAD = M_PI / 180.0;
-	const double MAX_LAT = 85.05112878; // practical Mercator limit
-
-	coordinates_t p;
-
-	if (latitude_deg > MAX_LAT)
-		latitude_deg = MAX_LAT;
-	if (latitude_deg < -MAX_LAT)
-		latitude_deg = -MAX_LAT;
-
-	double lon = longitude_deg * DEG_TO_RAD;
-	double lat = latitude_deg * DEG_TO_RAD;
-
-	p.longitude = (scale * lon);
-	p.latitude = (scale * log (tan (M_PI / 4.0 + lat / 2.0)));
-
-	return p;
-}
-
-/**
- * @brief Convert Mercator X, Y coordinates back to longitude and latitude.
- *
- * Converts Mercator-projected Cartesian coordinates (x, y) back to geographic
- * longitude and latitude in degrees, using the same scale factor that was used
- * for the forward projection.
- *
- * @note This function is the exact inverse of the Mercator projection:
- *       x = scale * longitude_rad, y = scale * log(tan(pi/4 + latitude_rad/2)).
- *       For practical use (e.g., Web Mercator), consider clamping latitude
- *       output to approximately ±85.0511°.
- *
- * @param[in]  scale           Scale factor used in the original Mercator projection.
- *                             Must be positive and non‑zero.
- * @param[in]  x               Mercator X coordinate (in the same units as `scale`).
- * @param[in]  y               Mercator Y coordinate (in the same units as `scale`).
- *
- * @return coordinates_t structure containing:
- *         - longitude: longitude in degrees (-180.0 to 180.0).
- *         - latitude:  latitude in degrees (unbounded in theory,
- *                          but typically clamped to about ±85.0511° for Web Mercator).
- *
- * @see mercator_project()  Forward projection from longitude/latitude to Mercator (x, y).
- */
-coordinates_t coordinates_mercator_inverse (double scale, double x, double y)
-{
-	const double RAD_TO_DEG = 180.0 / M_PI;
-
-	coordinates_t ll;
-
-	double lon = x / scale;
-	double lat = 2.0 * atan (exp (y / scale)) - M_PI / 2.0;
-
-	ll.longitude = lon * RAD_TO_DEG;
-	ll.latitude = lat * RAD_TO_DEG;
-
-	return ll;
-}
-
-///**
-// *
-// * @param mercator
-// * @return
-// */
-//SDL_Point coordinates_mercator_to_sdl (const coordinates_t mercator)
-//{
-//	SDL_Point out;
-//
-//	double x = mercator.latitude - coordinates_viewport_current.latitude;
-//	double y = mercator.longitude - coordinates_viewport_current.longitude;
-//
-//	out.x = x / coordinates_degrees_latitude_per_pixel;
-//	out.y = y / coordinates_degrees_longitude_per_pixel;
-//
-//	return out;
-//}
-
-/// ==================================================================================================
-///	GLOBAL FUNCTIONS
-/// ==================================================================================================
 
 /**
  * Converts longitude and latitude to the xy coordinates on the screen
@@ -388,11 +371,10 @@ coordinates_t coordinates_mercator_inverse (double scale, double x, double y)
  * @param latitude
  * @return a copy of SDL_Point structure set to representing xy screen coordinates
  */
-SDL_Point coordinates_get_point_from_latlon (float longitude, float latitude)
+SDL_Point coordinates_get_point_from_latlon (double longitude, double latitude)
 {
 	(void)coordinates_viewport_limit;
 	(void)coordinates_viewport_current;
-	(void)coordinates_degrees_longitude_per_pixel;
 
 	const coordinates_t mercator =
 		coordinates_mercator_project (coordinates_scale, longitude, latitude);
@@ -402,11 +384,55 @@ SDL_Point coordinates_get_point_from_latlon (float longitude, float latitude)
 									  coordinates_viewport_current.longitude,
 									  coordinates_viewport_current.latitude);
 
-
 	const double lon = mercator.longitude - mercator_viewport_origin.longitude;
 	const double lat = mercator.latitude - mercator_viewport_origin.latitude;
 
-	const SDL_Point out = {.x = -(int)(lat * 1000.0), .y = (int)(lon * 1000.0)};
+	const SDL_Point out = {.x = -(int)(lat * coordinates_output_scale),
+						   .y = (int)(lon * coordinates_output_scale)};
 
 	return out;
 }
+
+void coordinates_scale_zoom_in (double by_this)
+{
+	coordinates_scale = coordinates_scale + by_this;
+
+	if (coordinates_scale == 0.0) {
+		coordinates_scale = by_this;
+	}
+}
+
+void coordinates_scale_zoom_out (double by_this)
+{
+	coordinates_scale = coordinates_scale - by_this;
+
+	if (coordinates_scale == 0.0) {
+		coordinates_scale = -by_this;
+	}
+}
+
+void coordinates_output_scale_zoom_in (double by_this)
+{
+	coordinates_output_scale = coordinates_output_scale + by_this;
+
+	if (coordinates_output_scale == 0.0) {
+		coordinates_output_scale = by_this;
+	}
+}
+
+void coordinates_output_scale_zoom_out (double by_this)
+{
+	coordinates_output_scale = coordinates_output_scale - by_this;
+
+	if (coordinates_output_scale == 0.0) {
+		coordinates_output_scale = -by_this;
+	}
+}
+
+coordinates_t coordinates_return_current_viewport(void)
+{
+	return coordinates_viewport_current;
+}
+
+
+

@@ -17,6 +17,7 @@
 #include "draw/text.h"
 #include "types/aircraft_stv_t.h"
 
+#include "coordinates.h"
 #include "main_application_config.h"
 
 int main (int argc, char *argv[])
@@ -59,7 +60,26 @@ int main (int argc, char *argv[])
 			if (e.type == SDL_QUIT) {
 				break;
 			}
+			else if (e.type == SDL_KEYDOWN) {
+				if (e.key.keysym.sym == SDLK_z) {
+					coordinates_scale_zoom_out (0.1);
+				}
+				else if (e.key.keysym.sym == SDLK_x) {
+					coordinates_scale_zoom_in (0.1);
+				}
+				else if (e.key.keysym.sym == SDLK_a) {
+					coordinates_output_scale_zoom_out (10);
+				}
+				else if (e.key.keysym.sym == SDLK_s) {
+					coordinates_output_scale_zoom_in (10);
+				}
+				else {
+					;
+				}
+			}
 		}
+		geography_draw_longitude_lines(renderer, 0.015, LINE_STYLE_DOTTED);
+
 		SDL_SetRenderDrawColor (renderer, 0, 0, 0, 0);
 		SDL_RenderClear (renderer);
 		stv.bearing++;
@@ -74,7 +94,7 @@ int main (int argc, char *argv[])
 		//		SDL_RenderDrawRect (renderer, &rectangle);
 		//		const line_coordinates_t line = main_get_bearing_line(&rectangle, (++bearing) %
 		// 360); 		SDL_RenderDrawLine (renderer, line.x1, line.y1, line.x2, line.y2);
-		//airspace_test (renderer, stv.bearing);
+		// airspace_test (renderer, stv.bearing);
 		SDL_RenderPresent (renderer);
 	}
 

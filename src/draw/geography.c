@@ -10,13 +10,15 @@
 #include <SDL2/SDL2_gfxPrimitives.h>
 #include <SDL2/SDL2_gfxPrimitives_font.h>
 #include <assert.h>
-#include <draw_aircraft_config.h>
-#include <draw_geography_config.h>
 #include <stddef.h>
 #include <stdint.h>
 
 #include "coordinates.h"
+#include "draw_aircraft_config.h"
+#include "draw_geography_config.h"
+#include "main_application_config.h"
 #include "text.h"
+
 /// ==================================================================================================
 ///	LOCAL DEFINITIONS
 /// ==================================================================================================
@@ -121,4 +123,57 @@ void geography_draw_mountain (SDL_Renderer *renderer, float lat, float lon, cons
 					left.x - (int)(label_ln * 2),
 					left.y + (CONFIG_DRAW_AIRCRAFT_LABEL_FONT_SIZE / 5));
 	}
+}
+
+void geography_draw_longitude_lines (SDL_Renderer *renderer, double step, line_style_t style)
+{
+	const coordinates_t viewport = coordinates_return_current_viewport ();
+
+	// offset from current viewport origin, multiplication of 'step' value
+	double longitude_offset = 0;
+
+	double latitude_offset = 0;
+
+	const double vertical_step = step / 10;
+
+	if (style == LINE_STYLE_DOTTED) {
+		// x (horizontal) coordinate of a line draw currently
+		int x = 0;
+
+		// y (vertical) coordinate of a current dot
+		int y = 0;
+
+		SDL_SetRenderDrawColor (renderer, 128, 128, 128, 0);
+
+		do {
+			// origin point of current line
+			const SDL_Point start_point =
+				coordinates_get_point_from_latlon (viewport.longitude + longitude_offset,
+												   viewport.latitude);
+
+			do {
+				const SDL_Point point =
+					coordinates_get_point_from_latlon (viewport.longitude + longitude_offset,
+													   viewport.latitude + latitude_offset);
+
+				y = point.y;
+
+				latitude_offset += vertical_step;
+
+				SDL_RenderDrawPoint (renderer, point.x, point.y);
+			} while (y < MAIN_HEIGHT);
+
+			// copy current X coordinate to loop termination condition
+			x = start_point.x;
+
+			longitude_offset += step;
+		} while (x < MAIN_WIDTH);
+	}
+}
+
+void geography_draw_latitude_lines (SDL_Renderer *renderer, double step, line_style_t style)
+{
+	(void)renderer;
+	(void) step;
+	(void)style;
 }
