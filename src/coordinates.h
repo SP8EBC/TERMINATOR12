@@ -77,7 +77,7 @@ bool coordinates_wgs84_destination_point (double lat1_deg, double lon1_deg, doub
  * @param latitude
  * @return a copy of SDL_Point structure set to represenging xy screen coordinates
  */
-SDL_Point coordinates_get_point_from_latlon (double longitude, double latitude);
+SDL_Point coordinates_get_point_from_lonlat (double longitude, double latitude);
 
 void coordinates_scale_zoom_in (double by_this);
 

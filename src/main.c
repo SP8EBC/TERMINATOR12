@@ -78,14 +78,13 @@ int main (int argc, char *argv[])
 				}
 			}
 		}
-		geography_draw_longitude_lines(renderer, 0.015, LINE_STYLE_DOTTED);
-
 		SDL_SetRenderDrawColor (renderer, 0, 0, 0, 0);
 		SDL_RenderClear (renderer);
 		stv.bearing++;
 		if (stv.bearing > 359) {
 			stv.bearing = 0;
 		}
+		geography_draw_longitude_lines(renderer, 0.15, LINE_STYLE_DOTTED);
 		aircraft_draw_w_bearing_line_label (renderer, &stv, "SPSWWW");
 		geography_draw_mountain (renderer, 49.6855667f, 19.0312978f, skrzyczne, strlen (skrzyczne));
 		geography_draw_mountain (renderer, 48.7872189f, 19.2248306f, zar, strlen (zar));

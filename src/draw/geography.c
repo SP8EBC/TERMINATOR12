@@ -92,7 +92,7 @@ void geography_draw_mountain (SDL_Renderer *renderer, float lat, float lon, cons
 	const float half_a = CONFIG_DRAW_GEOGRAPHY_MOUNTIN_SIZ * 0.5F;
 	const float h = TR_HEIGHT (CONFIG_DRAW_GEOGRAPHY_MOUNTIN_SIZ);
 
-	const SDL_Point upper_point = coordinates_get_point_from_latlon (lon, lat);
+	const SDL_Point upper_point = coordinates_get_point_from_lonlat (lon, lat);
 
 	// for simplicity, let's assume that the top of a triangle is located exactly on the
 	const SDL_Point left = {.x = (int)(round ((float)upper_point.x - half_a)),
@@ -130,9 +130,9 @@ void geography_draw_longitude_lines (SDL_Renderer *renderer, double step, line_s
 	const coordinates_t viewport = coordinates_return_current_viewport ();
 
 	// offset from current viewport origin, multiplication of 'step' value
-	double longitude_offset = 0;
+	double longitude_offset = 0.01;
 
-	double latitude_offset = 0;
+	double latitude_offset = 0.01;
 
 	const double vertical_step = step / 10;
 
@@ -148,23 +148,26 @@ void geography_draw_longitude_lines (SDL_Renderer *renderer, double step, line_s
 		do {
 			// origin point of current line
 			const SDL_Point start_point =
-				coordinates_get_point_from_latlon (viewport.longitude + longitude_offset,
+				coordinates_get_point_from_lonlat (viewport.longitude + longitude_offset,
 												   viewport.latitude);
 
 			do {
 				const SDL_Point point =
-					coordinates_get_point_from_latlon (viewport.longitude + longitude_offset,
+					coordinates_get_point_from_lonlat (viewport.longitude + longitude_offset,
 													   viewport.latitude + latitude_offset);
 
-				y = point.y;
+				y = abs(point.y);
+				x = abs(point.x);
 
 				latitude_offset += vertical_step;
 
-				SDL_RenderDrawPoint (renderer, point.x, point.y);
+				SDL_RenderDrawPoint (renderer, x, y);
 			} while (y < MAIN_HEIGHT);
 
+			latitude_offset = 0;
+
 			// copy current X coordinate to loop termination condition
-			x = start_point.x;
+			x = abs(start_point.x);
 
 			longitude_offset += step;
 		} while (x < MAIN_WIDTH);
@@ -174,6 +177,6 @@ void geography_draw_longitude_lines (SDL_Renderer *renderer, double step, line_s
 void geography_draw_latitude_lines (SDL_Renderer *renderer, double step, line_style_t style)
 {
 	(void)renderer;
-	(void) step;
+	(void)step;
 	(void)style;
 }

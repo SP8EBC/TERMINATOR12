@@ -54,7 +54,7 @@ static coordinates_t coordinates_viewport_current = {
 
 // static double coordinates_degrees_latitude_per_pixel;
 
-static double coordinates_scale = 1.0;
+static double coordinates_scale = 10;
 
 static double coordinates_output_scale = 1000.0;
 
@@ -371,7 +371,7 @@ bool coordinates_wgs84_destination_point (double lat1_deg, double lon1_deg, doub
  * @param latitude
  * @return a copy of SDL_Point structure set to representing xy screen coordinates
  */
-SDL_Point coordinates_get_point_from_latlon (double longitude, double latitude)
+SDL_Point coordinates_get_point_from_lonlat (double longitude, double latitude)
 {
 	(void)coordinates_viewport_limit;
 	(void)coordinates_viewport_current;
@@ -387,8 +387,8 @@ SDL_Point coordinates_get_point_from_latlon (double longitude, double latitude)
 	const double lon = mercator.longitude - mercator_viewport_origin.longitude;
 	const double lat = mercator.latitude - mercator_viewport_origin.latitude;
 
-	const SDL_Point out = {.x = -(int)(lat * coordinates_output_scale),
-						   .y = (int)(lon * coordinates_output_scale)};
+	const SDL_Point out = {.x = (int)(lon * coordinates_output_scale),
+						   .y = -(int)(lat * coordinates_output_scale)};
 
 	return out;
 }

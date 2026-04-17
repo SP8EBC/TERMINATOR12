@@ -188,7 +188,7 @@ static line_coordinates_t aircraft_get_bearing_line (SDL_Rect *for_this, short b
  */
 SDL_Rect aircraft_draw_w_bearing_line (SDL_Renderer *renderer, aircraft_stv_t *aircraft)
 {
-	const SDL_Point point = coordinates_get_point_from_latlon (aircraft->lon, aircraft->lat);
+	const SDL_Point point = coordinates_get_point_from_lonlat (aircraft->lon, aircraft->lat);
 
 	// point x=0,y=0 is in top left corner. Width goes along x-axis towards right. height goes along
 	// y-axis towards down
