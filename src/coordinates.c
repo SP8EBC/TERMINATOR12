@@ -387,8 +387,13 @@ SDL_Point coordinates_get_point_from_lonlat (double longitude, double latitude)
 	const double lon = mercator.longitude - mercator_viewport_origin.longitude;
 	const double lat = mercator.latitude - mercator_viewport_origin.latitude;
 
-	const SDL_Point out = {.x = (int)(lon * coordinates_output_scale),
-						   .y = -(int)(lat * coordinates_output_scale)};
+	SDL_Point out = {.x = (int)(lon * coordinates_output_scale),
+					 .y = -(int)(lat * coordinates_output_scale)};
+
+	// (0,0) point is located in top left corner of a SDL render window
+	// while coordinates 0.0 N / 0.0E are well... in the middle?
+	// for sure degrees latitude increases from the bottom towards the top
+	//out.y = MAIN_HEIGHT - out.y;
 
 	return out;
 }
@@ -429,10 +434,7 @@ void coordinates_output_scale_zoom_out (double by_this)
 	}
 }
 
-coordinates_t coordinates_return_current_viewport(void)
+coordinates_t coordinates_return_current_viewport (void)
 {
 	return coordinates_viewport_current;
 }
-
-
-
