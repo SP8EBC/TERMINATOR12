@@ -156,21 +156,21 @@ void geography_draw_longitude_lines (SDL_Renderer *renderer, double step, line_s
 					coordinates_get_point_from_lonlat (viewport.longitude + longitude_offset,
 													   viewport.latitude + latitude_offset);
 
-				y = abs (point.y);
-				x = abs (point.x);
+				y = point.y;
+				x = point.x;
 
 				latitude_offset += vertical_step;
 
 				SDL_RenderDrawPoint (renderer, x, y);
-			} while (y <= MAIN_HEIGHT);
+			} while ((y <= MAIN_HEIGHT) && (y >= 0));
 
 			latitude_offset = 0;
 
 			// copy current X coordinate to loop termination condition
-			x = abs (start_point.x);
+			x = start_point.x;
 
 			longitude_offset += step;
-		} while (x <= MAIN_WIDTH);
+		} while ((x <= MAIN_WIDTH) && (x >= 0));
 	}
 }
 
@@ -205,20 +205,20 @@ void geography_draw_latitude_lines (SDL_Renderer *renderer, double step, line_st
 					coordinates_get_point_from_lonlat (viewport.longitude + longitude_offset,
 													   viewport.latitude + latitude_offset);
 
-				y = abs (point.y);
-				x = abs (point.x);
+				y = point.y;
+				x = point.x;
 
 				longitude_offset += horizontal_step;
 
 				SDL_RenderDrawPoint (renderer, x, y);
-			} while (x <= MAIN_WIDTH);
+			} while ((x <= MAIN_WIDTH) && (x >= 0));
 
 			longitude_offset = 0;
 
 			// copy current X coordinate to loop termination condition
-			y = abs (start_point.y);
+			y = start_point.y;
 
 			latitude_offset += step;
-		} while (y <= MAIN_HEIGHT);
+		} while ((y <= MAIN_HEIGHT) && (y >= 0));
 	}
 }
