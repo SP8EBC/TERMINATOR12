@@ -30,7 +30,7 @@
  * @brief top left GPS-WSG84 coordinate of default location
  * @note assumes latitude N & longitude E
  */
-#define MAIN_VIEWPORT_DEFAULT_LOCATION(ENTRY) ENTRY (49.7481156, 18.9444758)
+#define MAIN_VIEWPORT_DEFAULT_LOCATION(ENTRY) ENTRY (49.8044983, 18.8900422)
 
 
 /**

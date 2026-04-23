@@ -154,7 +154,7 @@ void geography_draw_longitude_lines (SDL_Renderer *renderer, double step, line_s
 			do {
 				const SDL_Point point =
 					coordinates_get_point_from_lonlat (viewport.longitude + longitude_offset,
-													   viewport.latitude + latitude_offset);
+													   viewport.latitude - latitude_offset);
 
 				y = point.y;
 				x = point.x;
@@ -198,12 +198,12 @@ void geography_draw_latitude_lines (SDL_Renderer *renderer, double step, line_st
 			// origin point of current line
 			const SDL_Point start_point =
 				coordinates_get_point_from_lonlat (viewport.longitude,
-												   viewport.latitude + latitude_offset);
+												   viewport.latitude - latitude_offset);
 
 			do {
 				const SDL_Point point =
 					coordinates_get_point_from_lonlat (viewport.longitude + longitude_offset,
-													   viewport.latitude + latitude_offset);
+													   viewport.latitude - latitude_offset);
 
 				y = point.y;
 				x = point.x;

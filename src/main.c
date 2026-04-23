@@ -43,16 +43,19 @@ int main (int argc, char *argv[])
 										   SDL_WINDOWPOS_UNDEFINED,
 										   MAIN_WIDTH,
 										   MAIN_HEIGHT,
-										   SDL_WINDOW_SHOWN);
+										   SDL_WINDOW_OPENGL);
 
 	SDL_Renderer *renderer = SDL_CreateRenderer (window, -1, SDL_RENDERER_ACCELERATED);
+
+	int w = 0, h = 0, ww = 0, hh = 0;
+
+	SDL_GetRendererOutputSize(renderer, &w, &h);
+	SDL_GetWindowSizeInPixels(window, &ww, &hh);
 
 	aircraft_stv_t stv = {0U};
 	stv.lat = 49.7194486f;
 	stv.lon = 19.1048506f;
 	stv.altitude = 3500;
-
-	// #define MAIN_VIEWPORT_DEFAULT_LOCATION(ENTRY) ENTRY (49.7481156, 18.9444758)
 
 	while (1) {
 		SDL_Event e;
@@ -93,7 +96,7 @@ int main (int argc, char *argv[])
 		//		SDL_SetRenderDrawColor (renderer, 255, 255, 255, 0);
 		//		SDL_RenderDrawRect (renderer, &rectangle);
 		//		const line_coordinates_t line = main_get_bearing_line(&rectangle, (++bearing) %
-		// 360); 		SDL_RenderDrawLine (renderer, line.x1, line.y1, line.x2, line.y2);
+		// #define MAIN_VIEWPORT_DEFAULT_LOCATION(ENTRY) ENTRY (49.8044983, 18.8900422)
 		// airspace_test (renderer, stv.bearing);
 		SDL_RenderPresent (renderer);
 	}

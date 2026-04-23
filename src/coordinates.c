@@ -393,7 +393,7 @@ SDL_Point coordinates_get_point_from_lonlat (double longitude, double latitude)
 	// (0,0) point is located in top left corner of a SDL render window
 	// while coordinates 0.0 N / 0.0E are well... in the middle?
 	// for sure degrees latitude increases from the bottom towards the top
-	out.y = MAIN_HEIGHT - out.y;
+	out.y = MAIN_HEIGHT + out.y;
 
 	return out;
 }
