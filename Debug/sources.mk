@@ -23,6 +23,7 @@ OBJS :=
 
 # Every subdirectory with source files must be described here
 SUBDIRS := \
+lib/c-logger/src \
 src \
 src/draw \
 

@@ -21,6 +21,13 @@
 ///	GLOBAL TYPEDEFS
 /// ==================================================================================================
 
+typedef enum coordinate_direction_t {
+	WEST,
+	NORTH,
+	EAST,
+	SOUTH
+}coordinate_direction_t;
+
 /// ==================================================================================================
 ///	GLOBAL VARIABLES
 /// ==================================================================================================
@@ -79,14 +86,53 @@ bool coordinates_wgs84_destination_point (double lat1_deg, double lon1_deg, doub
  */
 SDL_Point coordinates_get_point_from_lonlat (double longitude, double latitude);
 
+/**
+ * @brief Zooms in by adding 'by_this' to the current value of 'coordinates_scale', which is a scale factor
+ * used in equations to project WSG-84 coordinates to web-mercator.
+ * @note if after adding, the value of 'coordinates_scale' will become zero, it is set to 'by_this'
+ * @param by_this a value to increase coordinates_scale
+ */
 void coordinates_scale_zoom_in (double by_this);
 
+/**
+ * @brief Zooms out by subtracting 'by_this' from the current value of 'coordinates_scale', which is a
+ * scale factor used in equations to project WSG-84 coordinates to web-mercator.
+ * @note if after subtraction, the value of 'coordinates_scale' will become zero, it is set to
+ * negative 'by_this'
+ * @param by_this a value to increase coordinates_scale
+ */
 void coordinates_scale_zoom_out (double by_this);
 
+/**
+ * @brief Zooms in by adding 'by_this' to the current value of 'coordinates_output_scale', which
+ * is a scale factor applied to web-mercator xy *after* projecting from WSG-84 coordinates
+ * to web-mercator.
+ * @note if after adding, the value of 'coordinates_output_scale' will become zero, it is set to 'by_this'
+ * @param by_this a value to increase coordinates_scale
+ */
 void coordinates_output_scale_zoom_in (double by_this);
 
+/**
+ * @brief Zooms out by subtracting 'by_this' from the current value of 'coordinates_output_scale', which
+ * is a scale factor applied to web-mercator xy *after* projecting from WSG-84 coordinates
+ * to web-mercator.
+ * @note if after subtracting, the value of 'coordinates_output_scale' will become zero, it is set to 'by_this'
+ * @param by_this a value to increase coordinates_scale
+ */
 void coordinates_output_scale_zoom_out (double by_this);
 
+/**
+ * @brief Moves origin point, which simply results in moving map left/right/up/down
+ * @param towards_there direction we want to move to
+ * @param by_this degrees of latitude or longitude
+ */
+void coordinates_move_origin(coordinate_direction_t towards_there, double by_this);
+
+/**
+ *
+ * @return
+ */
 coordinates_t coordinates_return_current_viewport (void);
+
 
 #endif /* SRC_COORDINATES_H_ */

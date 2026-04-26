@@ -24,14 +24,13 @@
  * moved / zoomed
  * @note assumes latitude N & longitude E
  */
-#define MAIN_VIEWPORT_LIMIT(ENTRY) ENTRY (49.9366358, 18.4033992)
+#define MAIN_VIEWPORT_LIMIT(ENTRY) ENTRY (50.0473358, 18.70000)
 
 /**
  * @brief top left GPS-WSG84 coordinate of default location
  * @note assumes latitude N & longitude E
  */
 #define MAIN_VIEWPORT_DEFAULT_LOCATION(ENTRY) ENTRY (49.8044983, 18.8900422)
-
 
 /**
  * @brief float which is a longitude size of a viewport expressed as degrees, which is

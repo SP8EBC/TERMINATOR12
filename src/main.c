@@ -49,8 +49,8 @@ int main (int argc, char *argv[])
 
 	int w = 0, h = 0, ww = 0, hh = 0;
 
-	SDL_GetRendererOutputSize(renderer, &w, &h);
-	SDL_GetWindowSizeInPixels(window, &ww, &hh);
+	SDL_GetRendererOutputSize (renderer, &w, &h);
+	SDL_GetWindowSizeInPixels (window, &ww, &hh);
 
 	aircraft_stv_t stv = {0U};
 	stv.lat = 49.7194486f;
@@ -76,6 +76,18 @@ int main (int argc, char *argv[])
 				else if (e.key.keysym.sym == SDLK_s) {
 					coordinates_output_scale_zoom_in (10);
 				}
+				else if (e.key.keysym.sym == SDLK_h) {
+					coordinates_move_origin (WEST, 0.1);
+				}
+				else if (e.key.keysym.sym == SDLK_j) {
+					coordinates_move_origin (EAST, 0.1);
+				}
+				else if (e.key.keysym.sym == SDLK_k) {
+					coordinates_move_origin (NORTH, 0.1);
+				}
+				else if (e.key.keysym.sym == SDLK_l) {
+					coordinates_move_origin (SOUTH, 0.1);
+				}
 				else {
 					;
 				}
@@ -87,8 +99,8 @@ int main (int argc, char *argv[])
 		if (stv.bearing > 359) {
 			stv.bearing = 0;
 		}
-		geography_draw_longitude_lines(renderer, 0.15, LINE_STYLE_DOTTED);
-		geography_draw_latitude_lines(renderer, 0.15, LINE_STYLE_DOTTED);
+		geography_draw_longitude_lines (renderer, 0.15, LINE_STYLE_DOTTED);
+		geography_draw_latitude_lines (renderer, 0.15, LINE_STYLE_DOTTED);
 		aircraft_draw_w_bearing_line_label (renderer, &stv, "SPSWWW");
 		geography_draw_mountain (renderer, 49.6855667f, 19.0312978f, skrzyczne, strlen (skrzyczne));
 		geography_draw_mountain (renderer, 49.7872189f, 19.2248306f, zar, strlen (zar));

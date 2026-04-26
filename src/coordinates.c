@@ -393,11 +393,17 @@ SDL_Point coordinates_get_point_from_lonlat (double longitude, double latitude)
 	// (0,0)MAIN_HEIGHT point is located in top left corner of a SDL render window
 	// while coordinates 0.0 N / 0.0E are well... in the middle?
 	// for sure degrees latitude increases from the bottom towards the top
-	//out.y = out.y + MAIN_HEIGHT;
+	// out.y = out.y + MAIN_HEIGHT;
 
 	return out;
 }
 
+/**
+ * @brief Zooms in by adding 'by_this' to the current value of 'coordinates_scale', which is a scale
+ * factor used in equations to project WSG-84 coordinates to web-mercator.
+ * @note if after adding, the value of 'coordinates_scale' will become zero, it is set to 'by_this'
+ * @param by_this a value to increase coordinates_scale
+ */
 void coordinates_scale_zoom_in (double by_this)
 {
 	coordinates_scale = coordinates_scale + by_this;
@@ -407,6 +413,13 @@ void coordinates_scale_zoom_in (double by_this)
 	}
 }
 
+/**
+ * @brief Zooms out by subtracting 'by_this' from the current value of 'coordinates_scale', which is
+ * a scale factor used in equations to project WSG-84 coordinates to web-mercator.
+ * @note if after subtraction, the value of 'coordinates_scale' will become zero, it is set to
+ * negative 'by_this'
+ * @param by_this a value to increase coordinates_scale
+ */
 void coordinates_scale_zoom_out (double by_this)
 {
 	coordinates_scale = coordinates_scale - by_this;
@@ -416,6 +429,14 @@ void coordinates_scale_zoom_out (double by_this)
 	}
 }
 
+/**
+ * @brief Zooms in by adding 'by_this' to the current value of 'coordinates_output_scale', which
+ * is a scale factor applied to web-mercator xy *after* projecting from WSG-84 coordinates
+ * to web-mercator.
+ * @note if after adding, the value of 'coordinates_output_scale' will become zero, it is set to
+ * 'by_this'
+ * @param by_this a value to increase coordinates_scale
+ */
 void coordinates_output_scale_zoom_in (double by_this)
 {
 	coordinates_output_scale = coordinates_output_scale + by_this;
@@ -425,12 +446,62 @@ void coordinates_output_scale_zoom_in (double by_this)
 	}
 }
 
+/**
+ * @brief Zooms out by subtracting 'by_this' from the current value of 'coordinates_output_scale',
+ * which is a scale factor applied to web-mercator xy *after* projecting from WSG-84 coordinates to
+ * web-mercator.
+ * @note if after subtracting, the value of 'coordinates_output_scale' will become zero, it is set
+ * to 'by_this'
+ * @param by_this a value to increase coordinates_scale
+ */
 void coordinates_output_scale_zoom_out (double by_this)
 {
 	coordinates_output_scale = coordinates_output_scale - by_this;
 
 	if (coordinates_output_scale == 0.0) {
 		coordinates_output_scale = -by_this;
+	}
+}
+
+/**
+ * @brief Moves origin point, which simply results in moving map left/right/up/down
+ * @param towards_there direction we want to move to
+ * @param by_this degrees of latitude or longitude
+ */
+void coordinates_move_origin (coordinate_direction_t towards_there, double by_this)
+{
+	coordinates_t new = {0u};
+
+	// clang-format off
+	switch (towards_there) {
+		case WEST: {
+			new.longitude = coordinates_viewport_current.longitude - by_this;
+			new.latitude = coordinates_viewport_current.latitude;
+			break;
+		}
+		case NORTH: {
+			new.longitude = coordinates_viewport_current.longitude;
+			new.latitude = coordinates_viewport_current.latitude + by_this;
+			break;
+		}
+		case EAST: {
+			new.longitude = coordinates_viewport_current.longitude + by_this;
+			new.latitude = coordinates_viewport_current.latitude;
+			break;
+		}
+		case SOUTH: {
+			new.longitude = coordinates_viewport_current.longitude;
+			new.latitude = coordinates_viewport_current.latitude - by_this;
+			break;
+		}
+	}
+	// clang-format on
+
+	// check if a limit was reached
+	if (new.latitude < coordinates_viewport_limit.latitude &&
+			new.longitude > coordinates_viewport_limit.longitude)
+	{
+		coordinates_viewport_current = new;
 	}
 }
 

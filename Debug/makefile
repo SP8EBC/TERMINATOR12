@@ -10,6 +10,7 @@ RM := rm -rf
 -include sources.mk
 -include src/draw/subdir.mk
 -include src/subdir.mk
+-include lib/c-logger/src/subdir.mk
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(strip $(C++_DEPS)),)
 -include $(C++_DEPS)
