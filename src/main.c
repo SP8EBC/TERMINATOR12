@@ -129,7 +129,10 @@ int main (int argc, char *argv[])
 		//		const line_coordinates_t line = main_get_bearing_line(&rectangle, (++bearing) %
 		// #define MAIN_VIEWPORT_DEFAULT_LOCATION(ENTRY) ENTRY (49.8044983, 18.8900422)
 		// airspace_test (renderer, stv.bearing);
-		airspace_draw(renderer, heap_hardcoded_airspaces[0]);
+		for (size_t i = 0; i < heap_hardcoded_airspaces_count(); i++)
+		{
+			airspace_draw (renderer, heap_hardcoded_airspaces[i]);
+		}
 		SDL_RenderPresent (renderer);
 	}
 
