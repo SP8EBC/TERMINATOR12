@@ -6,6 +6,7 @@
  */
 
 #include "airspace.h"
+#include "coordinates.h"
 
 #include <SDL2/SDL2_gfxPrimitives.h>
 
@@ -34,7 +35,7 @@
 ///	GLOBAL FUNCTIONS
 /// ==================================================================================================
 
-void airspace_test (SDL_Renderer *renderer, short i)
+void airspace_draw(SDL_Renderer *renderer, const airspace_t* const to_draw)
 {
 
 	/*!
@@ -57,12 +58,20 @@ void airspace_test (SDL_Renderer *renderer, short i)
 	const Sint16 testy[TEST_SIZE] = {200, 400, 400, 100, 200};
 	*/
 
-	const Sint16 basex[TEST_SIZE] = {900 + i / 3,
-									 400 + i / 3,
-									 1100 + i / 3,
-									 1000 + i / 3,
-									 900 + i / 3};
-	const Sint16 basey[TEST_SIZE] = {300 + i, 500 + i, 500 + i, 200 + i, 300 + i};
+	Sint16 basex[to_draw->num_of_vertices];
+	Sint16 basey[to_draw->num_of_vertices];
 
-	polygonColor (renderer, basex, basey, TEST_SIZE, 0xFFFFFF40);
+	memset(basex, 0x00, to_draw->num_of_vertices);
+	memset(basey, 0x00, to_draw->num_of_vertices);
+
+	for (size_t i = 0; i < to_draw->num_of_vertices; i++)
+	{
+		coordinates_t* vtx = &to_draw->vertices[i];
+		SDL_Point point = coordinates_get_point_from_lonlat(vtx->longitude, vtx->latitude);
+		basex[i] = (Sint16)point.x;
+		basey[i] = (Sint16)point.y;
+	}
+
+
+	polygonColor (renderer, basex, basey, (int)to_draw->num_of_vertices, 0xFFFFFF40);
 }

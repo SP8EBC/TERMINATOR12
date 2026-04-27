@@ -26,4 +26,5 @@ SUBDIRS := \
 lib/c-logger/src \
 src \
 src/draw \
+src/heap \
 

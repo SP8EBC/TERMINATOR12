@@ -10,6 +10,7 @@
 
 #include <SDL2/SDL.h>
 
+#include "../types/airspace_t.h"
 
 /// ==================================================================================================
 ///	GLOBAL DEFINITIONS
@@ -27,6 +28,6 @@
 ///	GLOBAL FUNCTIONS
 /// ==================================================================================================
 
-void airspace_test(SDL_Renderer *renderer, short i);
+void airspace_draw(SDL_Renderer *renderer, const airspace_t* const to_draw);
 
 #endif /* SRC_DRAW_AIRSPACE_H_ */

@@ -8,6 +8,7 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include src/heap/subdir.mk
 -include src/draw/subdir.mk
 -include src/subdir.mk
 -include lib/c-logger/src/subdir.mk

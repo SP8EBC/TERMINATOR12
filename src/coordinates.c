@@ -7,6 +7,8 @@
 
 #include "coordinates.h"
 
+#include <logger.h>
+
 #include "types/coordinates_t.h"
 
 #include "main_application_config.h"
@@ -54,7 +56,7 @@ static coordinates_t coordinates_viewport_current = {
 
 // static double coordinates_degrees_latitude_per_pixel;
 
-static double coordinates_scale = 10;
+static double coordinates_scale = 47.6;
 
 static double coordinates_output_scale = 1000.0;
 
@@ -411,6 +413,7 @@ void coordinates_scale_zoom_in (double by_this)
 	if (coordinates_scale == 0.0) {
 		coordinates_scale = by_this;
 	}
+	LOG_INFO ("coordinates_scale_zoom_in, coordinates_scale: %f", coordinates_scale);
 }
 
 /**
@@ -427,6 +430,7 @@ void coordinates_scale_zoom_out (double by_this)
 	if (coordinates_scale == 0.0) {
 		coordinates_scale = -by_this;
 	}
+	LOG_INFO ("coordinates_scale_zoom_out, coordinates_scale: %f", coordinates_scale);
 }
 
 /**
@@ -444,6 +448,8 @@ void coordinates_output_scale_zoom_in (double by_this)
 	if (coordinates_output_scale == 0.0) {
 		coordinates_output_scale = by_this;
 	}
+	LOG_INFO ("coordinates_output_scale_zoom_in, coordinates_output_scale: %f",
+			  coordinates_output_scale);
 }
 
 /**
@@ -461,6 +467,8 @@ void coordinates_output_scale_zoom_out (double by_this)
 	if (coordinates_output_scale == 0.0) {
 		coordinates_output_scale = -by_this;
 	}
+	LOG_INFO ("coordinates_output_scale_zoom_out, coordinates_output_scale: %f",
+			  coordinates_output_scale);
 }
 
 /**
@@ -498,10 +506,12 @@ void coordinates_move_origin (coordinate_direction_t towards_there, double by_th
 	// clang-format on
 
 	// check if a limit was reached
-	if (new.latitude < coordinates_viewport_limit.latitude &&
-			new.longitude > coordinates_viewport_limit.longitude)
-	{
+	if (new.latitude<coordinates_viewport_limit.latitude &&new.longitude> coordinates_viewport_limit
+			.longitude) {
 		coordinates_viewport_current = new;
+		LOG_INFO ("coordinates_move_origin, latitude: %f, longitude: %f",
+				  coordinates_viewport_current.latitude,
+				  coordinates_viewport_current.longitude);
 	}
 }
 
