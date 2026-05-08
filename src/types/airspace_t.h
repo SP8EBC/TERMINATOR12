@@ -20,11 +20,21 @@
 ///	GLOBAL TYPEDEFS
 /// ==================================================================================================
 
+typedef enum airspace_type_t {
+	AIRSPACE_TRA,
+	AIRSPACE_ATZ,
+	AIRSPACE_TMA,
+	AIRSPACE_CTR,
+	AIRSPACE_MRT,
+	AIRSPACE_DEFAULT
+}airspace_type_t;
+
 typedef struct airspace_t {
 	coordinates_t *vertices;
 	size_t num_of_vertices;
 	double radius;
 	const char * name;
+	airspace_type_t type;
 }airspace_t;
 
 
