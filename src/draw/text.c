@@ -64,6 +64,8 @@ void text_draw (SDL_Renderer *renderer, const int font_size, const char *text, i
 		SDL_Texture *mTexture = SDL_CreateTextureFromSurface (renderer, textSurface);
 		SDL_RenderCopyEx (renderer, mTexture, NULL, &renderQuad, 0, NULL, SDL_FLIP_NONE);
 	}
+
+	TTF_CloseFont (font);
 }
 
 /**

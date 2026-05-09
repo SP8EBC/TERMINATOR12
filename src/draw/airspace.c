@@ -34,14 +34,12 @@
  * @param for_type
  * @return
  */
-static Uint32 airspce_get_color(airspace_type_t for_type)
+static Uint32 airspce_get_color (airspace_type_t for_type)
 {
-	if (for_type == AIRSPACE_ATZ)
-	{
+	if (for_type == AIRSPACE_ATZ) {
 		return 0xFFFFFF40;
 	}
-	else
-	{
+	else {
 		return 0xFFFF4040;
 	}
 	// 0xFFFFFF40
@@ -77,10 +75,10 @@ static void airspace_draw_round (SDL_Renderer *renderer, const airspace_t *const
 	const int radius = perimeter.x - center_point.x;
 
 	circleColor (renderer,
-				(Sint16)center_point.x,
-				(Sint16)center_point.y,
-				(Sint16)abs (radius),
-				airspce_get_color(to_draw->type));
+				 (Sint16)center_point.x,
+				 (Sint16)center_point.y,
+				 (Sint16)abs (radius),
+				 airspce_get_color (to_draw->type));
 }
 
 /// ==================================================================================================
@@ -129,7 +127,11 @@ void airspace_draw (SDL_Renderer *renderer, const airspace_t *const to_draw)
 			basey[i] = (Sint16)point.y;
 		}
 
-		polygonColor (renderer, basex, basey, (int)to_draw->num_of_vertices, airspce_get_color(to_draw->type));
+		polygonColor (renderer,
+					  basex,
+					  basey,
+					  (int)to_draw->num_of_vertices,
+					  airspce_get_color (to_draw->type));
 	}
 	else {
 		airspace_draw_round (renderer, to_draw);

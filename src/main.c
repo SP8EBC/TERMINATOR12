@@ -17,6 +17,7 @@
 #include "draw/geography.h"
 #include "draw/text.h"
 #include "heap/heap_airspaces.h"
+#include "srtm/srtm.h"
 #include "types/aircraft_stv_t.h"
 #include "types/airspace_t.h"
 #include "types/airspace_t_xmacros.h"
@@ -45,6 +46,8 @@ int main (int argc, char *argv[])
 
 		LOG_DEBUG ("number_of_vrt: %d", ptr->num_of_vertices);
 	}
+
+	srtm_test ();
 
 	svgDrawing *ptSvg;
 	const int initres = SDL_Init (SDL_INIT_VIDEO);
@@ -129,8 +132,7 @@ int main (int argc, char *argv[])
 		//		const line_coordinates_t line = main_get_bearing_line(&rectangle, (++bearing) %
 		// #define MAIN_VIEWPORT_DEFAULT_LOCATION(ENTRY) ENTRY (49.8044983, 18.8900422)
 		// airspace_test (renderer, stv.bearing);
-		for (size_t i = 0; i < heap_hardcoded_airspaces_count(); i++)
-		{
+		for (size_t i = 0; i < heap_hardcoded_airspaces_count (); i++) {
 			airspace_draw (renderer, heap_hardcoded_airspaces[i]);
 		}
 		SDL_RenderPresent (renderer);
