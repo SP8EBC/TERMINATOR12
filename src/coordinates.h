@@ -87,6 +87,20 @@ bool coordinates_wgs84_destination_point (double lat1_deg, double lon1_deg, doub
 SDL_Point coordinates_get_point_from_lonlat (double longitude, double latitude);
 
 /**
+ * Converts given xy screen coordinates back into GPS WSG-84 latitude & longitude
+ * @param x coordinate
+ * @param y
+ * @param out where a result of the conversion will be stored
+ * @note some values of params x and y have a special sense.
+ * 			(0,0) 	is of course top left corner
+ * 			(-1,0)	is top right corner
+ * 			(0,-1)	is bottom left corner
+ * 			(-1,-1) is bottom right corner
+ * @return false if given coordinates are out of screen or out is null, true if conversion is valid
+ */
+bool coordinates_get_from_point(int x, int y, coordinates_t* out);
+
+/**
  * @brief Zooms in by adding 'by_this' to the current value of 'coordinates_scale', which is a scale factor
  * used in equations to project WSG-84 coordinates to web-mercator.
  * @note if after adding, the value of 'coordinates_scale' will become zero, it is set to 'by_this'
@@ -130,7 +144,7 @@ void coordinates_move_origin(coordinate_direction_t towards_there, double by_thi
 
 /**
  *
- * @return
+ * @return a coordinates of current top-left corner
  */
 coordinates_t coordinates_return_current_viewport (void);
 

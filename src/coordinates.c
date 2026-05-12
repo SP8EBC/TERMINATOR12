@@ -375,8 +375,6 @@ bool coordinates_wgs84_destination_point (double lat1_deg, double lon1_deg, doub
  */
 SDL_Point coordinates_get_point_from_lonlat (double longitude, double latitude)
 {
-	(void)coordinates_viewport_limit;
-	(void)coordinates_viewport_current;
 
 	const coordinates_t mercator =
 		coordinates_mercator_project (coordinates_scale, longitude, latitude);
@@ -398,6 +396,73 @@ SDL_Point coordinates_get_point_from_lonlat (double longitude, double latitude)
 	// out.y = out.y + MAIN_HEIGHT;
 
 	return out;
+}
+
+/**
+ * Converts given xy screen coordinates back into GPS WSG-84 latitude & longitude
+ * @param x coordinate
+ * @param y
+ * @param out where a result of the conversion will be stored
+ * @note some values of params x and y have a special sense.
+ * 			(0,0) 	is of course top left corner
+ * 			(-1,0)	is top right corner
+ * 			(0,-1)	is bottom left corner
+ * 			(-1,-1) is bottom right corner
+ * @return false if given coordinates are out of screen or out is null, true if conversion is valid
+ */
+bool coordinates_get_from_point (int x, int y, coordinates_t *out)
+{
+	bool retval = false;
+
+	if (out == NULL) {
+		return retval;
+	}
+
+	// first input validation
+	if (x < -1 || y < -1) {
+		return retval;
+	}
+
+	// handle special cases
+	if (x == -1) {
+		if (y == 0) {
+			*out = coordinates_mercator_inverse (coordinates_scale, MAIN_WIDTH, 0);
+			// top right corner
+
+			retval = true;
+		}
+		else if (y == -1) {
+			*out = coordinates_mercator_inverse (coordinates_scale, MAIN_WIDTH, MAIN_HEIGHT);
+			// bottom right corner
+
+			retval = true;
+		}
+		else {
+			; // wrong value
+		}
+	}
+	else if (y == -1) {
+		if (x == 0) {
+			*out = coordinates_mercator_inverse (coordinates_scale, 0, MAIN_HEIGHT);
+			// bottom left corner
+
+			retval = true;
+		}
+		else {
+			; // wrong value
+		}
+	}
+	else {
+		// normal cases
+
+		// check if coordinates are not out of screen resolution
+		if (x <= MAIN_WIDTH && x <= MAIN_HEIGHT) {
+			*out = coordinates_mercator_inverse (coordinates_scale, x, y);
+			retval = true;
+		}
+	}
+
+	return retval;
 }
 
 /**
