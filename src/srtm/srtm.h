@@ -10,7 +10,8 @@
 
 #include <SDL2/SDL.h>
 
-void srtm_test(SDL_Renderer *renderer, uint16_t min_altitude, uint16_t max_altitude, uint16_t minor_step_metres, uint16_t major_step_increments);
+
+void srtm_load_files (const char * assets_dir_path);
 
 void srtm_render_for_viewport(SDL_Renderer *renderer, uint16_t min_altitude, uint16_t max_altitude, uint16_t minor_step_metres, uint16_t major_step_increments);
 

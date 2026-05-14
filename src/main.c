@@ -77,6 +77,8 @@ int main (int argc, char *argv[])
 	stv.lon = 19.1048506f;
 	stv.altitude = 3500;
 
+	srtm_load_files (" ");
+
 	while (1) {
 		SDL_Event e;
 		if (SDL_WaitEventTimeout (&e, 10)) {
@@ -90,12 +92,12 @@ int main (int argc, char *argv[])
 				else if (e.key.keysym.sym == SDLK_x) {
 					coordinates_scale_zoom_in (0.1);
 				}
-//				else if (e.key.keysym.sym == SDLK_a) {
-//					coordinates_output_scale_zoom_out (10);
-//				}
-//				else if (e.key.keysym.sym == SDLK_s) {
-//					coordinates_output_scale_zoom_in (10);
-//				}
+				//				else if (e.key.keysym.sym == SDLK_a) {
+				//					coordinates_output_scale_zoom_out (10);
+				//				}
+				//				else if (e.key.keysym.sym == SDLK_s) {
+				//					coordinates_output_scale_zoom_in (10);
+				//				}
 				else if (e.key.keysym.sym == SDLK_h) {
 					coordinates_move_origin (WEST, 0.01);
 				}
@@ -124,7 +126,6 @@ int main (int argc, char *argv[])
 		aircraft_draw_w_bearing_line_label (renderer, &stv, "SPSWWW");
 		geography_draw_mountain (renderer, 49.6855667f, 19.0312978f, skrzyczne, strlen (skrzyczne));
 		geography_draw_mountain (renderer, 49.7872189f, 19.2248306f, zar, strlen (zar));
-		srtm_test (renderer, 900, 1100, 200, 4);
 		// aircraft_draw_w_bearing_line (renderer, &stv);
 		//		SDL_SetRenderDrawColor (renderer, 255, 255, 255, 0);
 		//		SDL_RenderDrawRect (renderer, &rectangle);
