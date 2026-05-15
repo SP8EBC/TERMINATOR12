@@ -148,5 +148,6 @@ void coordinates_move_origin(coordinate_direction_t towards_there, double by_thi
  */
 coordinates_t coordinates_return_current_viewport (void);
 
+double coordinates_return_current_scale(void);
 
 #endif /* SRC_COORDINATES_H_ */

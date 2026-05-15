@@ -584,3 +584,8 @@ coordinates_t coordinates_return_current_viewport (void)
 {
 	return coordinates_viewport_current;
 }
+
+double coordinates_return_current_scale (void)
+{
+	return coordinates_scale;
+}
