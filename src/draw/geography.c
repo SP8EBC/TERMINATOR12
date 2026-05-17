@@ -136,6 +136,9 @@ void geography_draw_longitude_lines (SDL_Renderer *renderer, double step, line_s
 
 	const double vertical_step = step / 10;
 
+	// one batch of points per longitude line. Sized to comfortably hold a screen of dots.
+	SDL_Point pts[MAIN_HEIGHT + 1];
+
 	if (style == LINE_STYLE_DOTTED) {
 		// x (horizontal) coordinate of a line draw currently
 		int x = 0;
@@ -151,6 +154,8 @@ void geography_draw_longitude_lines (SDL_Renderer *renderer, double step, line_s
 				coordinates_get_point_from_lonlat (viewport.longitude + longitude_offset,
 												   viewport.latitude);
 
+			int n = 0;
+
 			do {
 				const SDL_Point point =
 					coordinates_get_point_from_lonlat (viewport.longitude + longitude_offset,
@@ -161,8 +166,16 @@ void geography_draw_longitude_lines (SDL_Renderer *renderer, double step, line_s
 
 				latitude_offset += vertical_step;
 
-				SDL_RenderDrawPoint (renderer, x, y);
+				if (n < (int)(sizeof (pts) / sizeof (pts[0]))) {
+					pts[n].x = x;
+					pts[n].y = y;
+					n++;
+				}
 			} while ((y <= MAIN_HEIGHT) && (y >= 0));
+
+			if (n > 0) {
+				SDL_RenderDrawPoints (renderer, pts, n);
+			}
 
 			latitude_offset = 0;
 
@@ -185,6 +198,9 @@ void geography_draw_latitude_lines (SDL_Renderer *renderer, double step, line_st
 
 	const double horizontal_step = step / 10;
 
+	// one batch of points per latitude line, sized to one screen-width worth of dots
+	SDL_Point pts[MAIN_WIDTH + 1];
+
 	if (style == LINE_STYLE_DOTTED) {
 		// x (horizontal) coordinate of a line draw currently
 		int x = 0;
@@ -200,6 +216,8 @@ void geography_draw_latitude_lines (SDL_Renderer *renderer, double step, line_st
 				coordinates_get_point_from_lonlat (viewport.longitude,
 												   viewport.latitude - latitude_offset);
 
+			int n = 0;
+
 			do {
 				const SDL_Point point =
 					coordinates_get_point_from_lonlat (viewport.longitude + longitude_offset,
@@ -210,8 +228,16 @@ void geography_draw_latitude_lines (SDL_Renderer *renderer, double step, line_st
 
 				longitude_offset += horizontal_step;
 
-				SDL_RenderDrawPoint (renderer, x, y);
+				if (n < (int)(sizeof (pts) / sizeof (pts[0]))) {
+					pts[n].x = x;
+					pts[n].y = y;
+					n++;
+				}
 			} while ((x <= MAIN_WIDTH) && (x >= 0));
+
+			if (n > 0) {
+				SDL_RenderDrawPoints (renderer, pts, n);
+			}
 
 			longitude_offset = 0;
 

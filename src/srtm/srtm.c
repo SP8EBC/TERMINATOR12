@@ -8,12 +8,15 @@
 #include "srtm.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
 #include <logger.h>
 #include <regex.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "coordinates.h"
@@ -129,6 +132,38 @@ static int srtm_find_for_viewport (coordinates_t viewport, double zoom,
 }
 
 /**
+ * @brief Returns true if @c name looks like a well-formed SRTM filename "NxxEyyy.HGT".
+ * Filenames not matching this layout are rejected to avoid OOB reads when slicing
+ * latitude/longitude substrings out of arbitrary directory entries.
+ */
+static bool srtm_filename_is_valid (const char *name)
+{
+	if (name == NULL) {
+		return false;
+	}
+
+	// shortest legal form is "NxxEyyy.HGT" = 11 chars
+	if (strlen (name) < 11) {
+		return false;
+	}
+
+	if (name[0] != 'N' && name[0] != 'S') {
+		return false;
+	}
+	if (!isdigit ((unsigned char)name[1]) || !isdigit ((unsigned char)name[2])) {
+		return false;
+	}
+	if (name[3] != 'E' && name[3] != 'W') {
+		return false;
+	}
+	if (!isdigit ((unsigned char)name[4]) || !isdigit ((unsigned char)name[5])
+		|| !isdigit ((unsigned char)name[6])) {
+		return false;
+	}
+	return true;
+}
+
+/**
  * Loads binary data from single HGT file
  * @param srtm_filename path and filename to binary HGT file
  * @param index at which data and metadata should be stored in @link{srtm_meta} and
@@ -136,7 +171,12 @@ static int srtm_find_for_viewport (coordinates_t viewport, double zoom,
  */
 static void srtm_load (char *srtm_filename, size_t index)
 {
-	char temp[4] = {0u}; // to manipulate lat/lon from a filename
+	char temp[8] = {0u}; // to manipulate lat/lon from a filename
+
+	if (!srtm_filename_is_valid (srtm_filename)) {
+		LOG_ERROR ("malformed SRTM filename, skipping: %s", srtm_filename);
+		return;
+	}
 
 	// open this file
 	FILE *srtm = fopen (srtm_filename, "rb");
@@ -144,47 +184,44 @@ static void srtm_load (char *srtm_filename, size_t index)
 	if (srtm == NULL) {
 		perror (NULL);
 		LOG_ERROR ("cannot open SRTM binary file: %s", srtm_filename);
+		return;
+	}
+
+	fseek (srtm, 0L, SEEK_END);
+	long int size = ftell (srtm);
+
+	// SRTM files (3 arcsecond resolution) have *always* the same size
+	if (size == EXPECTED_SRTM_SIZE) {
+
+		fseek (srtm, 0L, SEEK_SET);
+
+		size_t read_result =
+			fread (&srtm_data[index], sizeof (uint8_t), EXPECTED_SRTM_SIZE, srtm);
+
+		assert (read_result == EXPECTED_SRTM_SIZE);
 	}
 	else {
-		fseek (srtm, 0L, SEEK_END);
-		long int size = ftell (srtm);
-
-		// SRTM files (3 arcsecond resolution) have *always* the same size
-		if (size == EXPECTED_SRTM_SIZE) {
-
-			fseek (srtm, 0L, SEEK_SET);
-
-			//			for (unsigned i = 0; i < SIZE_IN_TILES; i++) {
-			//				for (unsigned j = 0; j < SIZE_IN_TILES; j++) {
-			//					uint16_t alti = srtm_data[i][j];
-			//					if (alti > 990 && alti < 1100) {
-			//						LOG_DEBUG ("i: %d, j: %d, alti: %d", i, j, alti);
-			//					}
-			//				}
-			//			}
-
-			size_t read_result =
-				fread (&srtm_data[index], sizeof (uint8_t), EXPECTED_SRTM_SIZE, srtm);
-
-			fclose (srtm);
-
-			assert (read_result == EXPECTED_SRTM_SIZE);
-		}
-		// assume N / E as for now
-
-		// extract latitude
-		memcpy (temp, srtm_filename + 1, 2);
-		srtm_meta[index].latitude = (short int)atoi (temp);
-
-		// extract longitude
-		memcpy (temp, srtm_filename + 4, 3);
-		srtm_meta[index].lontitude = (short int)atoi (temp);
-
-		LOG_INFO ("file: %s, latitude: %d, longitude: %d",
-				  srtm_filename,
-				  srtm_meta[index].latitude,
-				  srtm_meta[index].lontitude);
+		LOG_ERROR ("unexpected SRTM file size %ld for %s", size, srtm_filename);
 	}
+
+	fclose (srtm);
+
+	// assume N / E as for now
+
+	// extract latitude
+	memset (temp, 0, sizeof (temp));
+	memcpy (temp, srtm_filename + 1, 2);
+	srtm_meta[index].latitude = (short int)atoi (temp);
+
+	// extract longitude
+	memset (temp, 0, sizeof (temp));
+	memcpy (temp, srtm_filename + 4, 3);
+	srtm_meta[index].lontitude = (short int)atoi (temp);
+
+	LOG_INFO ("file: %s, latitude: %d, longitude: %d",
+			  srtm_filename,
+			  srtm_meta[index].latitude,
+			  srtm_meta[index].lontitude);
 }
 
 /// ==================================================================================================
@@ -215,6 +252,12 @@ void srtm_load_files (const char *assets_dir_path)
 	// opendir() returns a pointer of DIR type.
 	DIR *dr = opendir (".");
 
+	if (dr == NULL) {
+		LOG_ERROR ("cannot open current directory to scan for HGT files");
+		regfree (&hgt);
+		return;
+	}
+
 	// go through a content of current directory
 	while ((de = readdir (dr)) != NULL) {
 		if (regexec (&hgt, de->d_name, 0, NULL, 0) == 0) {
@@ -227,19 +270,31 @@ void srtm_load_files (const char *assets_dir_path)
 		}
 	}
 
+	closedir (dr);
+	regfree (&hgt);
+
 	if (idx == 0) {
 		LOG_ERROR ("SRTM height data file doesn't found!");
 		return;
 	}
+}
 
-	closedir (dr);
+void srtm_shutdown (void)
+{
+	if (srtm_texture_for_current_viewport != NULL) {
+		SDL_DestroyTexture (srtm_texture_for_current_viewport);
+		srtm_texture_for_current_viewport = NULL;
+	}
 }
 
 void srtm_render_for_viewport (SDL_Renderer *renderer, uint16_t min_altitude, uint16_t max_altitude,
 							   uint16_t minor_step_metres, uint16_t major_step_increments)
 {
-
-	(void)renderer;
+	// TODO: actual terrain rendering is not implemented yet. The function currently
+	// only checks whether any HGT tiles intersect the viewport and prepares a
+	// texture target for the future implementation. Previously this leaked a fresh
+	// texture on every call - now we drop the old one and only allocate when there
+	// is something to draw.
 	(void)min_altitude;
 	(void)max_altitude;
 	(void)minor_step_metres;
@@ -251,7 +306,17 @@ void srtm_render_for_viewport (SDL_Renderer *renderer, uint16_t min_altitude, ui
 
 	double zoom_level = coordinates_return_current_scale ();
 
-	srtm_find_for_viewport (viewport, zoom_level, matching);
+	const int matches = srtm_find_for_viewport (viewport, zoom_level, matching);
+
+	if (srtm_texture_for_current_viewport != NULL) {
+		SDL_DestroyTexture (srtm_texture_for_current_viewport);
+		srtm_texture_for_current_viewport = NULL;
+	}
+
+	if (matches <= 0) {
+		// nothing to render this frame, do not allocate a texture
+		return;
+	}
 
 	// create new texture to render terrain layer into
 	srtm_texture_for_current_viewport = SDL_CreateTexture (renderer,

@@ -10,12 +10,17 @@
 #include "draw/aircraft.h"
 
 #include <math.h>
+#include <string.h>
 
 #include "draw/text.h"
 #include "types/line_coordinates_t.h"
 
 #include "coordinates.h"
 #include "draw_aircraft_config.h"
+
+#ifdef WITH_OGN
+#include "ogn_config.h"
+#endif
 
 /// ==================================================================================================
 ///	LOCAL DEFINITIONS
@@ -103,6 +108,11 @@
 /// ==================================================================================================
 ///	LOCAL VARIABLES
 /// ==================================================================================================
+
+#ifdef WITH_OGN
+static ogn_position_t aircraft_table[OGN_MAX_TRACKED];
+static size_t		  aircraft_table_size = 0;
+#endif
 
 /// ==================================================================================================
 ///	LOCAL FUNCTIONS
@@ -239,3 +249,68 @@ void aircraft_draw_w_bearing_line_label (SDL_Renderer *renderer, aircraft_stv_t 
 							  aircraft->altitude,
 							  false);
 }
+
+#ifdef WITH_OGN
+
+void aircraft_table_upsert (const ogn_position_t *pos)
+{
+	if (pos == NULL || pos->callsign[0] == '\0') {
+		return;
+	}
+
+	// callsign match? -> overwrite slot
+	for (size_t i = 0; i < aircraft_table_size; i++) {
+		if (strncmp (aircraft_table[i].callsign, pos->callsign, OGN_CALLSIGN_MAX) == 0) {
+			aircraft_table[i] = *pos;
+			return;
+		}
+	}
+
+	// empty slot?
+	if (aircraft_table_size < OGN_MAX_TRACKED) {
+		aircraft_table[aircraft_table_size++] = *pos;
+		return;
+	}
+
+	// evict the oldest by rx_epoch_s
+	size_t   oldest_idx = 0;
+	uint64_t oldest_ts	= aircraft_table[0].rx_epoch_s;
+	for (size_t i = 1; i < OGN_MAX_TRACKED; i++) {
+		if (aircraft_table[i].rx_epoch_s < oldest_ts) {
+			oldest_ts = aircraft_table[i].rx_epoch_s;
+			oldest_idx = i;
+		}
+	}
+	aircraft_table[oldest_idx] = *pos;
+}
+
+void aircraft_table_prune (uint64_t now_epoch_s, uint32_t stale_seconds)
+{
+	size_t w = 0;
+	for (size_t r = 0; r < aircraft_table_size; r++) {
+		if (now_epoch_s > aircraft_table[r].rx_epoch_s &&
+			(now_epoch_s - aircraft_table[r].rx_epoch_s) > stale_seconds) {
+			continue; // drop
+		}
+		if (w != r) {
+			aircraft_table[w] = aircraft_table[r];
+		}
+		w++;
+	}
+	aircraft_table_size = w;
+}
+
+size_t aircraft_table_count (void)
+{
+	return aircraft_table_size;
+}
+
+const ogn_position_t *aircraft_table_get (size_t i)
+{
+	if (i >= aircraft_table_size) {
+		return NULL;
+	}
+	return &aircraft_table[i];
+}
+
+#endif /* WITH_OGN */

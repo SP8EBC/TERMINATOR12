@@ -61,4 +61,9 @@ void text_ndraw (SDL_Renderer *renderer, const int font_size, const char *text, 
  */
 void text_draw_altitude_or_fl(SDL_Renderer *renderer, const int font_size, int x, int y, unsigned altitude, bool true_for_fl);
 
+/**
+ * @brief Releases all cached TTF fonts. Must be called before TTF_Quit().
+ */
+void text_shutdown (void);
+
 #endif /* SRC_DRAW_TEXT_H_ */

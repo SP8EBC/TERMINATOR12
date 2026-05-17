@@ -60,9 +60,26 @@ static double coordinates_scale = 47.6;
 
 static double coordinates_output_scale = 1000.0;
 
+/**
+ * @brief Cached Mercator projection of the current viewport top-left corner.
+ * @note Projecting (longitude, latitude) of a point in @link{coordinates_get_point_from_lonlat}
+ * used to call @link{coordinates_mercator_project} twice: once for the point, once for the
+ * viewport origin. The origin only changes when the user pans or zooms, so we precompute it.
+ * The cache is (re)populated lazily on first use and refreshed by every setter below.
+ */
+static coordinates_t coordinates_mercator_viewport_origin_cache;
+
+static bool coordinates_origin_cache_valid = false;
+
 /// ==================================================================================================
 ///	LOCAL FUNCTIONS
 /// ==================================================================================================
+
+/**
+ * @brief (Re)projects the current viewport top-left corner into the Mercator cache.
+ * Cheap; called whenever @c coordinates_scale or @c coordinates_viewport_current change.
+ */
+static void coordinates_refresh_origin_cache (void);
 
 static double deg2rad (double deg)
 {
@@ -150,6 +167,15 @@ coordinates_t coordinates_mercator_inverse (double scale, double x, double y)
 	ll.latitude = lat * RAD_TO_DEG;
 
 	return ll;
+}
+
+static void coordinates_refresh_origin_cache (void)
+{
+	coordinates_mercator_viewport_origin_cache =
+		coordinates_mercator_project (coordinates_scale,
+									  coordinates_viewport_current.longitude,
+									  coordinates_viewport_current.latitude);
+	coordinates_origin_cache_valid = true;
 }
 
 /// ==================================================================================================
@@ -375,17 +401,16 @@ bool coordinates_wgs84_destination_point (double lat1_deg, double lon1_deg, doub
  */
 SDL_Point coordinates_get_point_from_lonlat (double longitude, double latitude)
 {
+	if (!coordinates_origin_cache_valid) {
+		coordinates_refresh_origin_cache ();
+	}
 
 	const coordinates_t mercator =
 		coordinates_mercator_project (coordinates_scale, longitude, latitude);
 
-	const coordinates_t mercator_viewport_origin =
-		coordinates_mercator_project (coordinates_scale,
-									  coordinates_viewport_current.longitude,
-									  coordinates_viewport_current.latitude);
-
-	const double lon = mercator.longitude - mercator_viewport_origin.longitude;
-	const double lat = mercator.latitude - mercator_viewport_origin.latitude;
+	const double lon =
+		mercator.longitude - coordinates_mercator_viewport_origin_cache.longitude;
+	const double lat = mercator.latitude - coordinates_mercator_viewport_origin_cache.latitude;
 
 	SDL_Point out = {.x = (int)(lon * coordinates_output_scale),
 					 .y = -(int)(lat * coordinates_output_scale)};
@@ -456,7 +481,7 @@ bool coordinates_get_from_point (int x, int y, coordinates_t *out)
 		// normal cases
 
 		// check if coordinates are not out of screen resolution
-		if (x <= MAIN_WIDTH && x <= MAIN_HEIGHT) {
+		if (x >= 0 && x <= MAIN_WIDTH && y >= 0 && y <= MAIN_HEIGHT) {
 			*out = coordinates_mercator_inverse (coordinates_scale, x, y);
 			retval = true;
 		}
@@ -478,7 +503,11 @@ void coordinates_scale_zoom_in (double by_this)
 	if (coordinates_scale == 0.0) {
 		coordinates_scale = by_this;
 	}
-	LOG_INFO ("coordinates_scale_zoom_in, coordinates_scale: %f", coordinates_scale);
+	coordinates_refresh_origin_cache ();
+	// Demoted from INFO: while a zoom key is held this fires every frame
+	// (60x/sec) and the synchronous printf + logger mutex was a measurable
+	// chunk of the main-thread CPU time.
+	LOG_DEBUG ("coordinates_scale_zoom_in, coordinates_scale: %f", coordinates_scale);
 }
 
 /**
@@ -495,7 +524,8 @@ void coordinates_scale_zoom_out (double by_this)
 	if (coordinates_scale == 0.0) {
 		coordinates_scale = -by_this;
 	}
-	LOG_INFO ("coordinates_scale_zoom_out, coordinates_scale: %f", coordinates_scale);
+	coordinates_refresh_origin_cache ();
+	LOG_DEBUG ("coordinates_scale_zoom_out, coordinates_scale: %f", coordinates_scale);
 }
 
 /**
@@ -570,13 +600,19 @@ void coordinates_move_origin (coordinate_direction_t towards_there, double by_th
 	}
 	// clang-format on
 
-	// check if a limit was reached
-	if (new.latitude<coordinates_viewport_limit.latitude &&new.longitude> coordinates_viewport_limit
-			.longitude) {
+	// MAIN_VIEWPORT_LIMIT is the *anchor* NW corner the viewport starts at, but
+	// it is no longer a hard wall on the north and west sides -- the user can
+	// pan past it freely. The south and east extents (LAT_SIZE / LON_SIZE) are
+	// still enforced so the map stays inside the data area in those directions.
+	const double min_lat = coordinates_viewport_limit.latitude + MAIN_VIEWPORT_LIMIT_LAT_SIZE;
+	const double max_lon = coordinates_viewport_limit.longitude + MAIN_VIEWPORT_LIMIT_LON_SIZE;
+
+	if (new.latitude >= min_lat && new.longitude <= max_lon) {
 		coordinates_viewport_current = new;
-		LOG_INFO ("coordinates_move_origin, latitude: %f, longitude: %f",
-				  coordinates_viewport_current.latitude,
-				  coordinates_viewport_current.longitude);
+		coordinates_refresh_origin_cache ();
+		LOG_DEBUG ("coordinates_move_origin, latitude: %f, longitude: %f",
+				   coordinates_viewport_current.latitude,
+				   coordinates_viewport_current.longitude);
 	}
 }
 
