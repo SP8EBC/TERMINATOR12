@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package terminator12.ogn;
+
+// One APRS position report, decoded into structured fields by the worker thread
+// and shipped over a named FIFO (see config/ogn_config.h) to the renderer.
+message PositionReport {
+    string callsign           = 1;
+    uint64 rx_epoch_s         = 2;
+    uint64 msg_epoch_s        = 3;
+    double latitude_deg       = 4;
+    double longitude_deg      = 5;
+    int32  altitude_feet      = 6;
+    uint32 ground_track_deg   = 7;
+    uint32 ground_speed_kt    = 8;
+    int32  vertical_speed_fpm = 9;
+}

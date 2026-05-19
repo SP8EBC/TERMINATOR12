@@ -9,6 +9,7 @@
 
 #include <SDL2/SDL2_gfxPrimitives.h>
 #include <assert.h>
+#include <logger.h>
 
 #include "coordinates.h"
 
@@ -59,14 +60,17 @@ static void airspace_draw_round (SDL_Renderer *renderer, const airspace_t *const
 
 	const coordinates_t *center = &to_draw->vertices[0];
 
-	bool destination_result = coordinates_wgs84_destination_point (center->latitude,
-																   center->longitude,
-																   90.0,
-																   to_draw->radius,
-																   &lat2_deg,
-																   &lon2_deg);
+	const bool destination_result = coordinates_wgs84_destination_point (center->latitude,
+																		 center->longitude,
+																		 90.0,
+																		 to_draw->radius,
+																		 &lat2_deg,
+																		 &lon2_deg);
 
-	assert (destination_result == true);
+	if (!destination_result) {
+		LOG_WARN ("airspace_draw_round: Vincenty did not converge for radius %.1f", to_draw->radius);
+		return;
+	}
 
 	const SDL_Point center_point =
 		coordinates_get_point_from_lonlat (center->longitude, center->latitude);
@@ -114,11 +118,9 @@ void airspace_draw (SDL_Renderer *renderer, const airspace_t *const to_draw)
 
 	if (to_draw->radius == 0.0) {
 
+		// VLAs fully overwritten by the loop below, no zeroing needed
 		Sint16 basex[to_draw->num_of_vertices];
 		Sint16 basey[to_draw->num_of_vertices];
-
-		memset (basex, 0x00, to_draw->num_of_vertices);
-		memset (basey, 0x00, to_draw->num_of_vertices);
 
 		for (size_t i = 0; i < to_draw->num_of_vertices; i++) {
 			coordinates_t *vtx = &to_draw->vertices[i];
